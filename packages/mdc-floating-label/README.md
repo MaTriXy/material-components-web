@@ -21,18 +21,24 @@ Floating labels display the type of input a field requires. Every Text Field and
   </li>
 </ul>
 
+## Installation
+
+```
+npm install @material/floating-label
+```
+
 ## Basic Usage
 
 ### HTML Structure
 
 ```html
-<label class="mdc-floating-label" for="my-text-field-id">Hint text</label>
+<span class="mdc-floating-label" id="my-label-id">Hint text</span>
 ```
 
 ### Styles
 
 ```scss
-@import "@material/floating-label/mdc-floating-label";
+@use "@material/floating-label/mdc-floating-label";
 ```
 
 ### JavaScript Instantiation
@@ -42,23 +48,6 @@ import {MDCFloatingLabel} from '@material/floating-label';
 
 const floatingLabel = new MDCFloatingLabel(document.querySelector('.mdc-floating-label'));
 ```
-
-## Variants
-
-### Avoid Dynamic ID Generation
-
-If you're using the JavaScript-enabled version of floating label, you can avoid needing to assign
-a unique `id` to each `<input>` by wrapping `mdc-text-field__input` within a `<label>`:
-
-```html
-<label class="mdc-text-field">
-  <input type="text" class="mdc-text-field__input">
-  <span class="mdc-floating-label">Hint Text</span>
-  <div class="mdc-text-field__bottom-line"></div>
-</label>
-```
-
-> NOTE: This method also works with `<select>`.
 
 ## Style Customization
 
@@ -74,11 +63,12 @@ CSS Class | Description
 
 Mixin | Description
 --- | ---
-`mdc-floating-label-ink-color($color)` | Customizes the ink color of the label.
-`mdc-floating-label-fill-color($color)` | Customizes the fill color of the label.
-`mdc-floating-label-shake-keyframes($modifier, $positionY, $positionX, $scale)` | Generates a CSS `@keyframes` at-rule for an invalid label shake. Used in conjunction with the `mdc-floating-label-shake-animation` mixin.
-`mdc-floating-label-shake-animation($modifier)` | Applies shake keyframe animation to label.
-`mdc-floating-label-float-position($positionY, $positionX, $scale)` | Sets position of label when floating.
+`ink-color($color)` | Customizes the ink color of the label.
+`fill-color($color)` | Customizes the fill color of the label.
+`shake-keyframes($modifier, $positionY, $positionX, $scale)` | Generates a CSS `@keyframes` at-rule for an invalid label shake. Used in conjunction with the `shake-animation` mixin.
+`shake-animation($modifier)` | Applies shake keyframe animation to label.
+`float-position($positionY, $positionX, $scale)` | Sets position of label when floating.
+`max-width($max-width)` | Sets the max width of the label.
 
 ## `MDCFloatingLabel` Properties and Methods
 
@@ -99,6 +89,8 @@ Method Signature | Description
 `addClass(className: string) => void` | Adds a class to the label element.
 `removeClass(className: string) => void` | Removes a class from the label element.
 `getWidth() => number` | Returns the width of the label element.
+`registerInteractionHandler(evtType: string, handler: EventListener) => void` | Registers an event listener for a given event.
+`deregisterInteractionHandler(evtType: string, handler: EventListener) => void` | Deregisters an event listener for a given event.
 
 ### `MDCFloatingLabelFoundation`
 

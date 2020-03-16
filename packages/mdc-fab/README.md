@@ -39,18 +39,21 @@ npm install @material/fab
 
 ### Load Material Icons
 
-We recommend you load [Material Icons](https://material.io/icons/) from Google Fonts
+We recommend using [Material Icons](https://material.io/tools/icons/) from Google Fonts:
 
 ```html
 <head>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 ```
+
+However, you can also use SVG, [Font Awesome](https://fontawesome.com/), or any other icon library you wish.
 
 ### HTML Structure
 
 ```html
 <button class="mdc-fab" aria-label="Favorite">
+  <div class="mdc-fab__ripple"></div>
   <span class="mdc-fab__icon material-icons">favorite</span>
 </button>
 ```
@@ -62,7 +65,7 @@ We recommend you load [Material Icons](https://material.io/icons/) from Google F
 ### Styles
 
 ```scss
-@import "@material/fab/mdc-fab";
+@use "@material/fab/mdc-fab";
 ```
 
 ### JavaScript Instantiation
@@ -77,6 +80,20 @@ const fabRipple = new MDCRipple(document.querySelector('.mdc-fab'));
 
 > See [Importing the JS component](../../docs/importing-js.md) for more information on how to import JavaScript.
 
+## Variants
+
+### Extended FAB
+
+```html
+<button class="mdc-fab mdc-fab--extended">
+  <div class="mdc-fab__ripple"></div>
+  <span class="material-icons mdc-fab__icon">add</span>
+  <span class="mdc-fab__label">Create</span>
+</button>
+```
+
+> _NOTE:_ The extended FAB must contain label where as the icon is optional. The icon and label may be specified in whichever order is appropriate based on context.
+
 ## Style Customization
 
 ### CSS Classes
@@ -85,6 +102,7 @@ CSS Class | Description
 --- | ---
 `mdc-fab` | Mandatory, for the button element
 `mdc-fab__icon` | Mandatory, for the icon element
+`mdc-fab__ripple` | Mandatory, for the element which shows the ripple.
 `mdc-fab__label` | Optional, for the text label. Applicable only for Extended FAB.
 `mdc-fab--mini` | Optional, modifies the FAB to a smaller size
 `mdc-fab--extended` | Optional, modifies the FAB to wider size which includes a text label.
@@ -100,8 +118,8 @@ MDC FAB uses [MDC Theme](../mdc-theme)'s `secondary` color by default. Use the f
 
 Mixin | Description
 --- | ---
-`mdc-fab-accessible($container-color)` | Changes the FAB's container color to the given color, and updates the FAB's ink and ripple color to meet accessibility standards.
-`mdc-fab-extended-fluid` | Makes the Extended FAB fluid to container, such as screen width or the layout grid. Exposed as a mixin to support use within `@media` queries.
+`accessible($container-color)` | Changes the FAB's container color to the given color, and updates the FAB's ink and ripple color to meet accessibility standards.
+`extended-fluid` | Makes the Extended FAB fluid to container, such as screen width or the layout grid. Exposed as a mixin to support use within `@media` queries.
 
 #### Advanced Sass Mixins
 
@@ -109,17 +127,35 @@ Mixin | Description
 
 Mixin | Description
 --- | ---
-`mdc-fab-container-color($color)` | Sets the container color to the given color
-`mdc-fab-icon-size($width, $height)` | Sets the icon `width`, `height`, and `font-size` properties to the specified `width` and `height`. `$height` is optional and will default to `$width` if omitted. The `font-size` will be set to the provided `$width` value.
-`mdc-fab-ink-color($color)` | Sets the ink color to the given color
+`container-color($color)` | Sets the container color to the given color
+`icon-size($width, $height)` | Sets the icon `width`, `height`, and `font-size` properties to the specified `width` and `height`. `$height` is optional and will default to `$width` if omitted. The `font-size` will be set to the provided `$width` value.
+`ink-color($color)` | Sets the ink color to the given color
+`extended-padding($icon-padding, $label-padding)` | Sets the padding on both sides of the icon, and between the label and the edge of the FAB. In cases where there is no icon, `$label-padding` will apply to both sides.
+`extended-label-padding($label-padding)` | Sets the label side padding for Extended FAB. Useful when styling an Extended FAB with no icon.
+`shape-radius($radius, $rtl-reflexive)` | Sets rounded shape to only regular & mini FAB variants with given radius size. Set `$rtl-reflexive` to true to flip radius values in RTL context, defaults to false.
+`extended-shape-radius($radius, $rtl-reflexive)` | Sets rounded shape to only Extended FAB variant with given radius size. Set `$rtl-reflexive` to true to flip radius values in RTL context, defaults to false.
 
 The ripple effect for the FAB component is styled using [MDC Ripple](../mdc-ripple) mixins.
 
-#### Caveat: Edge and CSS Variables
-
-In browsers that fully support CSS custom properties, the above mixins will work if you pass in a [MDC Theme](../mdc-theme) property (e.g. `primary`) as an argument. However, Edge does not fully support CSS custom properties. If you are using the `mdc-fab-container-color` mixin, you must pass in an actual color value for support in Edge.
-
 ### Additional Information
+
+#### Accessibility
+
+Material Design spec advises that touch targets should be at least 48x48px.
+While the FAB is 48x48px by default, the mini FAB is 40x40px. Add the following to meet this requirement for mini FAB's:
+
+```html
+<div class="mdc-touch-target-wrapper">
+  <button class="mdc-fab mdc-fab--mini mdc-fab--touch">
+    <div class="mdc-fab__ripple"></div>
+    <span class="material-icons mdc-fab__icon">add</span>
+    <span class="mdc-fab__label">Create</span>
+    <div class="mdc-fab__touch"></div>
+  </button>
+</div>
+```
+
+Note that the outer `mdc-touch-target-wrapper` element is only necessary if you want to avoid potentially overlapping touch targets on adjacent elements (due to collapsing margins).
 
 #### Positioning
 

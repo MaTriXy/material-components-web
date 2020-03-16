@@ -1,25 +1,31 @@
 {
   "name": "@material/line-ripple",
   "description": "The Material Components for the web line-ripple component",
-  "version": "0.35.0",
-  "license": "Apache-2.0",
+  "version": "5.1.0",
+  "license": "MIT",
   "keywords": [
     "material components",
     "material design",
     "lineripple",
     "line-ripple"
   ],
-  "main": "index.js",
+  "main": "dist/mdc.lineRipple.js",
+  "module": "index.js",
+  "sideEffects": false,
+  "types": "dist/mdc.lineRipple.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/material-components/material-components-web.git"
+    "url": "git+https://github.com/material-components/material-components-web.git",
+    "directory": "packages/mdc-line-ripple"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "@material/animation": "^0.34.0",
-    "@material/base": "^0.35.0",
-    "@material/theme": "^0.35.0"
+    "@material/animation": "^5.1.0",
+    "@material/base": "^5.1.0",
+    "@material/feature-targeting": "^5.1.0",
+    "@material/theme": "^5.1.0",
+    "tslib": "^1.9.3"
   }
 }

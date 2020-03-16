@@ -48,6 +48,7 @@ We recommend using MDC Radio with [MDC Form Field](../mdc-form-field) for enhanc
       <div class="mdc-radio__outer-circle"></div>
       <div class="mdc-radio__inner-circle"></div>
     </div>
+    <div class="mdc-radio__ripple"></div>
   </div>
   <label for="radio-1">Radio 1</label>
 </div>
@@ -56,8 +57,8 @@ We recommend using MDC Radio with [MDC Form Field](../mdc-form-field) for enhanc
 ### Styles
 
 ```scss
-@import "@material/form-field/mdc-form-field";
-@import "@material/radio/mdc-radio";
+@use "@material/form-field/mdc-form-field";
+@use "@material/radio/mdc-radio";
 ```
 
 ### JavaScript Instantiation
@@ -77,7 +78,7 @@ formField.input = radio;
 
 ## Variants
 
-### Disabled 
+### Disabled
 
 To disable a radio button, add the `mdc-radio--disabled` class to the root element and set the `disabled` attribute on the `<input>` element.
 Disabled radio buttons cannot be interacted with and have no visual interaction effect.
@@ -90,10 +91,33 @@ Disabled radio buttons cannot be interacted with and have no visual interaction 
       <div class="mdc-radio__outer-circle"></div>
       <div class="mdc-radio__inner-circle"></div>
     </div>
+    <div class="mdc-radio__ripple"></div>
   </div>
   <label for="radio-1">Radio 1</label>
 </div>
 ```
+
+## Additional Information
+
+### Accessibility
+
+Material Design spec advises that touch targets should be at least 48 x 48 px.
+To meet this requirement, add the `mdc-radio--touch` class to your radio as follows:
+
+```html
+<div class="mdc-touch-target-wrapper">
+  <div class="mdc-radio mdc-radio--touch">
+    <input class="mdc-radio__native-control" type="radio" id="radio-1" name="radios" checked>
+    <div class="mdc-radio__background">
+      <div class="mdc-radio__outer-circle"></div>
+      <div class="mdc-radio__inner-circle"></div>
+    </div>
+    <div class="mdc-radio__ripple"></div>
+  </div>
+</div>
+```
+
+Note that the outer  `mdc-touch-target-wrapper` element is only necessary if you want to avoid potentially overlapping touch targets on adjacent elements (due to collapsing margins).
 
 ## Style Customization
 
@@ -103,22 +127,24 @@ MDC Radio uses [MDC Theme](../mdc-theme)'s `secondary` color by default. Use the
 
 Mixin | Description
 --- | ---
-`mdc-radio-unchecked-stroke-color($color)` | Sets the stroke color of an unchecked radio button
-`mdc-radio-checked-stroke-color($color)` | Sets the stroke color of a checked radio button
-`mdc-radio-ink-color($color)` | Sets the ink color of a radio button
-`mdc-radio-focus-indicator-color($color)` | Sets the color of the focus indicator
-
-#### Caveat: Edge and CSS Custom Properties
-
-In browsers that fully support CSS custom properties, the above mixins will work if you pass in a [MDC Theme](../mdc-theme) property (e.g. `primary`) as an argument. However, Edge does not fully support CSS custom properties. If you are using any of the Sass mixins, you must pass in an actual color value for support in Edge.
+`unchecked-stroke-color($color)` | Sets the stroke color of an unchecked, enabled radio button
+`checked-stroke-color($color)` | Sets the stroke color of a checked, enabled radio button
+`ink-color($color)` | Sets the ink color of an enabled radio button
+`disabled-unchecked-stroke-color($color)` | Sets the stroke color of an unchecked, disabled radio button
+`disabled-checked-stroke-color($color)` | Sets the stroke color of a checked, disabled radio button
+`disabled-ink-color($color)` | Sets the ink color of a disabled radio button
+`focus-indicator-color($color)` | Sets the color of the focus indicator
+`touch-target($size, $ripple-size)` | Sets radio touch target size which can be more than the ripple size. Param `$ripple-size` is required for custom ripple size, defaults to `$ripple-size`.
+`ripple-size($size)` | Sets custom ripple size of radio.
+`density($density-scale)` | Sets density scale for radio. Supported density scale values are `-3`, `-2`, `-1` and `0` (default).
 
 ## `MDCRadio` Properties and Methods
 
 Property | Value Type | Description
 --- | --- | ---
-`checked` | Boolean | Proxies to the foundation's `isChecked`/`setChecked` methods
-`disabled` | Boolean | Proxies to the foundation's `isDisabled/setDisabled` methods
-`value` | String | Proxies to the foundation's `getValue/setValue` methods
+`checked` | Boolean | Setter/getter for the radio's checked state
+`disabled` | Boolean | Setter/getter for the radio's disabled state. Setter proxies to foundation's `setDisabled` method
+`value` | String | Setter/getter for the radio's value
 
 ## Usage within Web Frameworks
 
@@ -126,19 +152,14 @@ If you are using a JavaScript framework, such as React or Angular, you can creat
 
 ### `MDCRadioAdapter`
 
-| Method Signature | Description |
-| --- | --- |
-| `getNativeControl() => HTMLInputElement?` | Returns the native radio control, if available |
-| `addClass(className: string) => void` | Adds a class to the root element |
-| `removeClass(className: string) => void` | Removes a class from the root element |
+Method Signature | Description
+--- | ---
+`setNativeControlDisabled(disabled: boolean) => void` | Sets the input's `disabled` property to the given value
+`addClass(className: string) => void` | Adds a class to the root element
+`removeClass(className: string) => void` | Removes a class from the root element
 
 ### `MDCRadioFoundation`
 
-| Method Signature | Description |
-| --- | --- |
-| `isChecked() => boolean` | Returns whether the native control is checked, or `false` if there's no native control |
-| `setChecked(checked: boolean) => void` | Sets the checked value of the native control |
-| `isDisabled() => boolean` | Returns whether the native control is disabled, or `false` if there's no native control |
-| `setDisabled(disabled: boolean) => void` | Sets the disabled value of the native control |
-| `getValue() => string` | Returns the value of the native control, or `null` if there's no native control |
-| `setValue(value: string) => void` | Sets the value of the native control |
+Method Signature | Description
+--- | ---
+`setDisabled(disabled: boolean) => void` | Sets the disabled value of the native control

@@ -1,101 +1,291 @@
-// Copyright 2016 Google Inc. All Rights Reserved.
+// Copyright 2016 Google Inc.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
-@import "@material/animation/functions";
-@import "@material/elevation/mixins";
-@import "@material/elevation/variables";
-@import "@material/ripple/mixins";
-@import "@material/ripple/variables";
-@import "@material/theme/functions";
-@import "@material/theme/mixins";
+@use "@material/animation/functions" as animation-functions;
+@use "@material/elevation/mixins" as elevation-mixins;
+@use "@material/elevation/variables" as elevation-variables;
+@use "@material/feature-targeting/functions" as feature-targeting-functions;
+@use "@material/feature-targeting/mixins" as feature-targeting-mixins;
+@use "@material/ripple/mixins" as ripple-mixins;
+@use "@material/ripple/variables" as variables2;
+@use "@material/rtl/mixins" as rtl-mixins;
+@use "@material/shape/mixins" as shape-mixins;
+@use "@material/shape/functions" as shape-functions;
+@use "@material/theme/functions" as theme-functions;
+@use "@material/theme/mixins" as theme-mixins;
+@use "@material/touch-target/mixins" as touch-target-mixins;
+@use "@material/typography/mixins" as typography-mixins;
+@use "./variables";
 
-@mixin mdc-fab-accessible($container-color) {
-  $fill-tone: mdc-theme-tone($container-color);
+$ripple-target: ".mdc-fab__ripple";
 
-  @include mdc-fab-container-color($container-color);
+@mixin core-styles($query: feature-targeting-functions.all()) {
+  @include without-ripple($query);
+  @include ripple($query);
+}
+
+@mixin without-ripple($query: feature-targeting-functions.all()) {
+  // postcss-bem-linter: define fab
+
+  @include touch-target-mixins.wrapper($query); // COPYBARA_COMMENT_THIS_LINE
+  @include elevation-mixins.overlay-common($query); // COPYBARA_COMMENT_THIS_LINE
+
+  .mdc-fab {
+    @include base_($query: $query);
+    @include container-color(secondary, $query: $query);
+    @include icon-size(24px, $query: $query);
+    @include ink-color(on-secondary, $query: $query);
+  }
+
+  .mdc-fab--mini {
+    @include mini_($query: $query);
+  }
+
+  .mdc-fab--extended {
+    @include extended_($query: $query);
+  }
+
+  .mdc-fab--touch {
+    @include touch-target-mixins.margin(
+      $component-height: variables.$mini-height,
+      $component-width: variables.$mini-height,
+      $query: $query);
+
+    .mdc-fab__touch {
+      @include touch-target-mixins.touch-target($set-width: true, $query: $query);
+    }
+  }
+
+  .mdc-fab__label {
+    @include label_($query: $query);
+  }
+
+  .mdc-fab__icon {
+    @include icon_($query: $query);
+  }
+
+  // Increase specificity for FAB icon styles that need to override styles defined for .material-icons
+  // (which is loaded separately so the order of CSS definitions is not guaranteed)
+  .mdc-fab .mdc-fab__icon {
+    @include icon-overrides_($query: $query);
+  }
+
+  .mdc-fab--exited {
+    @include exited_($query: $query);
+  }
+
+  // postcss-bem-linter: end
+}
+
+@mixin ripple($query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include ripple-mixins.common($query); // COPYBARA_COMMENT_THIS_LINE
+
+  // postcss-bem-linter: define fab
+
+  .mdc-fab {
+    @include ripple-mixins.surface(
+      $query: $query, $ripple-target: $ripple-target);
+    @include ripple-mixins.radius-bounded(
+      $query: $query, $ripple-target: $ripple-target);
+    @include ripple-mixins.states(
+      on-secondary, $query: $query, $ripple-target: $ripple-target);
+
+    // stylelint-disable-next-line plugin/selector-bem-pattern
+    #{$ripple-target} {
+      @include ripple-mixins.target-common($query: $query);
+
+      @include feature-targeting-mixins.targets($feat-structure) {
+        overflow: hidden;
+      }
+    }
+  }
+
+  // postcss-bem-linter: end
+}
+
+@mixin accessible($container-color, $query: feature-targeting-functions.all()) {
+  @include container-color($container-color, $query: $query);
+
+  $fill-tone: theme-functions.tone($container-color);
 
   @if ($fill-tone == "dark") {
-    @include mdc-fab-ink-color(text-primary-on-dark);
-    @include mdc-states(text-primary-on-dark);
+    @include ink-color(text-primary-on-dark, $query: $query);
+    @include ripple-mixins.states(
+      text-primary-on-dark,
+      $query: $query,
+      $ripple-target: $ripple-target);
   } @else {
-    @include mdc-fab-ink-color(text-primary-on-light);
-    @include mdc-states(text-primary-on-light);
+    @include ink-color(text-primary-on-light, $query: $query);
+    @include ripple-mixins.states(
+      text-primary-on-light,
+      $query: $query,
+      $ripple-target: $ripple-target);
   }
 }
 
-@mixin mdc-fab-container-color($color) {
-  @include mdc-theme-prop(background-color, $color, $edgeOptOut: true);
+@mixin container-color($color, $query: feature-targeting-functions.all()) {
+  $feat-color: feature-targeting-functions.create-target($query, color);
+
+  @include feature-targeting-mixins.targets($feat-color) {
+    @include theme-mixins.prop(background-color, $color);
+  }
 }
 
-@mixin mdc-fab-icon-size($width, $height: $width) {
+@mixin icon-size($width, $height: $width, $query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
   .mdc-fab__icon {
-    width: $width;
-    height: $height;
-    font-size: $height;
+    @include feature-targeting-mixins.targets($feat-structure) {
+      width: $width;
+      height: $height;
+      font-size: $height;
+    }
   }
 }
 
-@mixin mdc-fab-ink-color($color) {
-  @include mdc-theme-prop(color, $color);
+@mixin ink-color($color, $query: feature-targeting-functions.all()) {
+  $feat-color: feature-targeting-functions.create-target($query, color);
+
+  @include feature-targeting-mixins.targets($feat-color) {
+    @include theme-mixins.prop(color, $color);
+  }
 }
 
-@mixin mdc-fab-extended-fluid {
-  width: 100%;
+@mixin extended-fluid($query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    width: 100%;
+  }
 }
 
-$mdc-fab-icon-enter-delay_: 90ms;
-$mdc-fab-icon-enter-duration_: 180ms;
-$mdc-fab-extended-height_: 48px;
+@mixin extended-padding($icon-padding, $label-padding, $query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
 
-@mixin mdc-fab-base_ {
-  @include mdc-ripple-surface;
-  @include mdc-ripple-radius-bounded;
-  @include mdc-elevation(6);
+  @include extended-label-padding($label-padding, $query: $query);
 
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 56px;
-  height: 56px;
-  padding: 0;
-  transition:
-    box-shadow $mdc-elevation-transition-duration $mdc-elevation-transition-timing-function,
-    opacity 15ms linear 30ms,
-    mdc-animation-enter(transform, $mdc-fab-icon-enter-duration_ + $mdc-fab-icon-enter-delay_);
-  border: none;
-  border-radius: 50%;
-  fill: currentColor;
-  cursor: pointer;
-  user-select: none;
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  overflow: hidden;
+  // Offsets the outer label padding by deducting it from icon padding.
+  .mdc-fab__icon {
+    @include feature-targeting-mixins.targets($feat-structure) {
+      @include rtl-mixins.reflexive-property(margin, $icon-padding - $label-padding, $icon-padding);
+    }
+  }
+
+  // For Extended FAB with text label followed by icon.
+  .mdc-fab__label + .mdc-fab__icon {
+    @include feature-targeting-mixins.targets($feat-structure) {
+      @include rtl-mixins.reflexive-property(margin, $icon-padding, $icon-padding - $label-padding);
+    }
+  }
+}
+
+@mixin extended-label-padding($label-padding, $query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    padding: 0 $label-padding;
+  }
+}
+
+@mixin shape-radius($radius, $rtl-reflexive: false, $query: feature-targeting-functions.all()) {
+  &:not(.mdc-fab--extended) {
+    @include shape-mixins.radius($radius, $rtl-reflexive, $query: $query);
+
+    #{$ripple-target} {
+      @include shape-mixins.radius($radius, $rtl-reflexive, $query: $query);
+    }
+  }
+}
+
+@mixin extended-shape-radius($radius, $rtl-reflexive: false, $query: feature-targeting-functions.all()) {
+  @include shape-mixins.radius(
+    shape-functions.resolve-percentage-radius(variables.$extended-height, $radius),
+    $rtl-reflexive,
+    $query: $query
+  );
+
+  #{$ripple-target} {
+    @include shape-mixins.radius(
+      shape-functions.resolve-percentage-radius(variables.$extended-height, $radius),
+      $rtl-reflexive,
+      $query: $query
+    );
+  }
+}
+
+$icon-enter-delay_: 90ms;
+$icon-enter-duration_: 180ms;
+
+@mixin base_($query: feature-targeting-functions.all()) {
+  @include elevation-mixins.overlay-surface-position($query: $query);
+  @include elevation-mixins.overlay-dimensions(100%, $query: $query);
+  @include elevation-mixins.elevation(6, $query: $query);
+  @include shape-radius(50%, $query: $query);
+
+  $feat-animation: feature-targeting-functions.create-target($query, animation);
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: variables.$height;
+    height: variables.$height;
+    padding: 0;
+    border: none;
+    fill: currentColor;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    // Even though `visible` is the default, IE 11 computes the property as
+    // `hidden` in some cases, unless it's explicitly defined here.
+    overflow: visible;
+  }
+
+  @include feature-targeting-mixins.targets($feat-animation) {
+    transition:
+      box-shadow elevation-variables.$transition-duration elevation-variables.$transition-timing-function,
+      opacity 15ms linear 30ms,
+      animation-functions.enter(transform, $icon-enter-duration_ + $icon-enter-delay_);
+  }
 
   &::-moz-focus-inner {
-    padding: 0;
-    border: 0;
+    @include feature-targeting-mixins.targets($feat-structure) {
+      padding: 0;
+      border: 0;
+    }
   }
 
   &:hover,
   &:focus {
-    @include mdc-elevation(8);
+    @include elevation-mixins.elevation(8, $query: $query);
   }
 
   &:active {
-    @include mdc-elevation(12);
+    @include elevation-mixins.elevation(12, $query: $query);
   }
 
   &:active,
@@ -104,11 +294,15 @@ $mdc-fab-extended-height_: 48px;
     // (an accessibility/usability feature) unless we're confident that there is also a visual indication that the
     // element has focus. If the client has customized the DOM in some unexpected way, and is certain that another
     // element will receive focus instead, they can always override this property manually in their CSS.
-    outline: none;
+    @include feature-targeting-mixins.targets($feat-structure) {
+      outline: none;
+    }
   }
 
   &:hover {
-    cursor: pointer;
+    @include feature-targeting-mixins.targets($feat-structure) {
+      cursor: pointer;
+    }
   }
 
   // This allows for using SVGs within them to align properly in all browsers.
@@ -117,55 +311,97 @@ $mdc-fab-extended-height_: 48px;
   // stylelint-disable selector-max-type
   // postcss-bem-linter: ignore
   > svg {
-    width: 100%;
+    @include feature-targeting-mixins.targets($feat-structure) {
+      width: 100%;
+    }
   }
   // stylelint-enable selector-max-type
 }
 
-@mixin mdc-fab--mini_ {
-  width: 40px;
-  height: 40px;
+@mixin mini_($query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    width: variables.$mini-height;
+    height: variables.$mini-height;
+  }
 }
 
-@mixin mdc-fab--extended_ {
-  @include mdc-typography(button);
+@mixin extended_($query: feature-targeting-functions.all()) {
+  @include typography-mixins.typography(button, $query: $query);
+  @include extended-shape-radius(50%, $query: $query);
+  @include extended-padding(variables.$extended-icon-padding, variables.$extended-label-padding, $query: $query);
 
-  width: auto;
-  max-width: 100%;
-  height: $mdc-fab-extended-height_;
-  padding: 0 20px 0 16px;
-  border-radius: $mdc-fab-extended-height_ / 2;
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    width: auto;
+    max-width: 100%;
+    height: variables.$extended-height;
+    // This allows the text within the extended fab to be centered for varying font sizes.
+    /* @alternate */
+    line-height: normal;
+  }
 }
 
-@mixin mdc-fab__icon_ {
-  transition: mdc-animation-enter(transform, $mdc-fab-icon-enter-duration_, $mdc-fab-icon-enter-delay_);
-  fill: currentColor;
-  will-change: transform;
+@mixin icon_($query: feature-targeting-functions.all()) {
+  $feat-animation: feature-targeting-functions.create-target($query, animation);
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-animation) {
+    transition: animation-functions.enter(transform, $icon-enter-duration_, $icon-enter-delay_);
+  }
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    fill: currentColor;
+    will-change: transform;
+  }
 }
 
-@mixin mdc-fab__label_ {
-  justify-content: flex-start;
-  padding-left: 8px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
+@mixin label_($query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    justify-content: flex-start;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
 }
 
-@mixin mdc-fab__icon-overrides_ {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+@mixin icon-overrides_($query: feature-targeting-functions.all()) {
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
-@mixin mdc-fab--exited_ {
-  transform: scale(0);
-  transition:
-    opacity 15ms linear 150ms,
-    mdc-animation-exit-permanent(transform, 180ms);
-  opacity: 0;
+@mixin exited_($query: feature-targeting-functions.all()) {
+  $feat-animation: feature-targeting-functions.create-target($query, animation);
+  $feat-structure: feature-targeting-functions.create-target($query, structure);
+
+  @include feature-targeting-mixins.targets($feat-structure) {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  @include feature-targeting-mixins.targets($feat-animation) {
+    transition:
+      opacity 15ms linear 150ms,
+      animation-functions.exit-permanent(transform, 180ms);
+  }
 
   .mdc-fab__icon {
-    transform: scale(0);
-    transition: mdc-animation-exit-permanent(transform, 135ms);
+    @include feature-targeting-mixins.targets($feat-structure) {
+      transform: scale(0);
+    }
+
+    @include feature-targeting-mixins.targets($feat-animation) {
+      transition: animation-functions.exit-permanent(transform, 135ms);
+    }
   }
 }

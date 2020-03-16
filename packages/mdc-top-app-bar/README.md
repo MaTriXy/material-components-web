@@ -44,23 +44,38 @@ npm install @material/top-app-bar
 <header class="mdc-top-app-bar">
   <div class="mdc-top-app-bar__row">
     <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-      <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">menu</a>
+      <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button">menu</button>
       <span class="mdc-top-app-bar__title">Title</span>
     </section>
   </div>
 </header>
 ```
 
+> NOTE: Please see note below about `mdc-icon-button` in the [Top App Bar With Action Items](#top-app-bar-with-action-items) section.
+
+#### Menu Icons
+
+We recommend using [Material Icons](https://material.io/tools/icons/) from Google Fonts:
+
+```html
+<head>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+```
+
+However, you can also use SVG, [Font Awesome](https://fontawesome.com/), or any other icon library you wish.
+
 ### Styles
 
 ```scss
-@import "@material/top-app-bar/mdc-top-app-bar";
+@use "@material/top-app-bar/mdc-top-app-bar";
+@use "@material/icon-button/mdc-icon-button";
 ```
 
 ### JavaScript Instantiation
 
 ```js
-import {MDCTopAppBar} from '@material/top-app-bar/index';
+import {MDCTopAppBar} from '@material/top-app-bar';
 
 // Instantiation
 const topAppBarElement = document.querySelector('.mdc-top-app-bar');
@@ -73,19 +88,19 @@ const topAppBar = new MDCTopAppBar(topAppBarElement);
 
 ### Top App Bar With Action Items
 
-Top app bars can contain action items which are placed on the side opposite the navigation icon.
+Top app bars can contain action items which are placed on the side opposite the navigation icon. You must also attach the `mdc-icon-button` class to both the `mdc-top-app-bar__navigation-icon` and the `mdc-top-app-bar__action-item` elements in order to get the correct styles applied. For further documentation on icons, please see the [mdc-icon-button docs](../mdc-icon-button/README.md).
 
 ```html
 <header class="mdc-top-app-bar">
   <div class="mdc-top-app-bar__row">
     <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-      <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">menu</a>
+      <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button">menu</button>
       <span class="mdc-top-app-bar__title">Title</span>
     </section>
     <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
-      <a href="#" class="material-icons mdc-top-app-bar__action-item" aria-label="Download" alt="Download">file_download</a>
-      <a href="#" class="material-icons mdc-top-app-bar__action-item" aria-label="Print this page" alt="Print this page">print</a>
-      <a href="#" class="material-icons mdc-top-app-bar__action-item" aria-label="Bookmark this page" alt="Bookmark this page">bookmark</a>
+      <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Download">file_download</button>
+      <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Print this page">print</button>
+      <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Bookmark this page">bookmark</button>
     </section>
   </div>
 </header>
@@ -99,11 +114,11 @@ Short top app bars are top app bars that can collapse to the navigation icon sid
 <header class="mdc-top-app-bar mdc-top-app-bar--short">
   <div class="mdc-top-app-bar__row">
     <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-      <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">menu</a>
+      <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button">menu</button>
       <span class="mdc-top-app-bar__title">Title</span>
     </section>
     <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
-      <a href="#" class="material-icons mdc-top-app-bar__action-item" aria-label="Bookmark this page" alt="Bookmark this page">bookmark</a>
+      <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Bookmark this page">bookmark</button>
     </section>
   </div>
 </header>
@@ -164,7 +179,7 @@ Class | Description
 `mdc-top-app-bar--prominent-fixed-adjust` | Class used to style the content below the prominent top app bar to prevent the top app bar from covering it.
 `mdc-top-app-bar--dense` | Class used to style the top app bar as a dense top app bar.
 `mdc-top-app-bar--dense-fixed-adjust` | Class used to style the content below the dense top app bar to prevent the top app bar from covering it.
-`mdc-top-app-bar--dense-prominent-fixed-adjust` | Class used to style the content below the top app bar when styled as both prominent and dense, to prevent the top app bar from covering it.
+`mdc-top-app-bar--dense-prominent-fixed-adjust` | Class used to style the content below the top app bar when styled as both dense and prominent, to prevent the top app bar from covering it.
 `mdc-top-app-bar--short` | Class used to style the top app bar as a short top app bar.
 `mdc-top-app-bar--short-collapsed` | Class used to indicate the short top app bar is collapsed.
 `mdc-top-app-bar--short-fixed-adjust` | Class used to style the content below the short top app bar to prevent the top app bar from covering it.
@@ -173,15 +188,17 @@ Class | Description
 
 Mixin | Description
 --- | ---
-`mdc-top-app-bar-ink-color($color)` | Sets the ink color of the top app bar.
-`mdc-top-app-bar-icon-ink-color($color)` | Sets the ink color of the top app bar icons.
-`mdc-top-app-bar-fill-color($color)` | Sets the fill color of the top app bar.
-`mdc-top-app-bar-fill-color-accessible($color)` | Sets the fill color of the top app bar and automatically sets a high-contrast ink color.
-`mdc-top-app-bar-short-border-radius($border-radius)` | Sets the `border-bottom-radius` property on the action item side. Used only for the short top app bar when collapsed.
+`ink-color($color)` | Sets the ink color of the top app bar.
+`icon-ink-color($color)` | Sets the ink color of the top app bar icons.
+`fill-color($color)` | Sets the fill color of the top app bar.
+`fill-color-accessible($color)` | Sets the fill color of the top app bar and automatically sets a high-contrast ink color.
+`short-shape-radius($radius, $rtl-reflexive)` | Sets the rounded shape to short top app bar variant (when it is collapsed) with given radius size. Set `$rtl-reflexive` to true to flip radius values in RTL context, defaults to true.
 
 ## `MDCTopAppBar` Properties and Methods
 
-MDCTopAppBar does not contain any properties or methods aside from those inherited from MDCComponent.
+Method Signature | Description
+--- | ---
+`setScrollTarget(target: element) => void` | Sets scroll target to different DOM node (default is window).
 
 ### Events
 
@@ -197,17 +214,36 @@ If you are using a JavaScript framework, such as React or Angular, you can creat
 
 Method Signature | Description
 --- | ---
-`hasClass(className: string) => boolean` | Checks if the root element of the component has the given className.
 `addClass(className: string) => void` | Adds a class to the root element of the component.
 `removeClass(className: string) => void` | Removes a class from the root element of the component.
-`registerNavigationIconInteractionHandler(evtType: string, handler: EventListener) => void` | Registers an event listener on the native navigation icon element for a given event.
-`deregisterNavigationIconInteractionHandler(evtType: string, handler: EventListener) => void` | Deregisters an event listener on the native navigation icon element for a given event.
-`notifyNavigationIconClicked() => void` | Emits a custom event `MDCTopAppBar:nav` when the navigation icon is clicked.
-`registerScrollHandler(handler) => void` | Registers a handler to be called when user scrolls. Our default implementation adds the handler as a listener to the window's `scroll` event.
-`deregisterScrollHandler(handler) => void` | Unregisters a handler to be called when user scrolls. Our default implementation removes the handler as a listener to the window's `scroll` event.
+`hasClass(className: string) => boolean` | Checks if the root element of the component has the given className.
+`setStyle(property: string, value: string) => void` | Sets the specified CSS property to the given value on the root element.
+`getTopAppBarHeight() => number` | Gets the height in px of the top app bar.
 `getViewportScrollY() => number` | Gets the number of pixels that the content of body is scrolled from the top of the page.
 `getTotalActionItems() => number` | Gets the number of action items in the top app bar.
+`notifyNavigationIconClicked() => void` | Emits a custom event `MDCTopAppBar:nav` when the navigation icon is clicked.
 
-### Foundations: `MDCTopAppBarBaseFoundation`, `MDCTopAppBarFoundation`, `MDCFixedTopAppBarFoundation` and `MDCShortTopAppBarFoundation`
+### Foundations
 
-The foundations do not contain any public properties or methods aside from those inherited from MDCFoundation.
+#### `MDCTopAppBarBaseFoundation`, `MDCTopAppBarFoundation`, `MDCFixedTopAppBarFoundation` and `MDCShortTopAppBarFoundation`
+
+All foundations provide the following methods:
+
+Method Signature | Description
+--- | ---
+`handleTargetScroll() => void` | Handles `scroll` event on specified scrollTarget (defaults to `window`).
+`handleWindowResize() => void` | Handles `resize` event on window.
+`handleNavigationClick() => void` | Handles `click` event on navigation icon.
+
+#### `MDCShortTopAppBarFoundation`
+
+In addition to the methods above, the short variant provides the following public methods and properties:
+
+Method Signature | Description
+--- | ---
+`setAlwaysCollapsed(value: boolean) => void` | When `value` is `true`, sets the short top app bar to always be collapsed.
+`getAlwaysCollapsed() => boolean` | Gets if the short top app bar is in the "always collapsed" state.
+
+Property | Value Type | Description
+--- | --- | ---
+`isCollapsed` | `boolean` (read-only) | Indicates whether the short top app bar is in the collapsed state.

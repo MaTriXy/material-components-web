@@ -3,16 +3,18 @@
 We'd love for you to contribute and make Material Components for the web even better than it is today!
 Here are the guidelines we'd like you to follow:
 
-- [General Contributing Guidelines](#general-contributing-guidelines)
-- [Development Process](#development-process)
-  - [Setting up your development environment](#setting-up-your-development-environment)
-  - [Building Components](#building-components)
-  - [Running the development server](#running-the-development-server)
-  - [Building MDC Web](#building-mdc-web)
-  - [Linting / Testing / Coverage Enforcement](#linting--testing--coverage-enforcement)
-    - [Running Tests across browsers](#running-tests-across-browsers)
-  - [Coding Style](#coding-style)
-  - [Submitting Pull Requests](#submitting-pull-requests)
+- [Contributing to Material Components Web (MDC Web)](#contributing-to-material-components-web-mdc-web)
+  - [General Contributing Guidelines](#general-contributing-guidelines)
+  - [Development Process](#development-process)
+    - [Setting up your development environment](#setting-up-your-development-environment)
+    - [Building Components](#building-components)
+    - [Running development server](#running-development-server)
+      - [App Engine development server](#app-engine-development-server)
+    - [Building MDC Web](#building-mdc-web)
+    - [Linting / Testing / Coverage Enforcement](#linting--testing--coverage-enforcement)
+      - [Running Tests across browsers](#running-tests-across-browsers)
+    - [Coding Style](#coding-style)
+    - [Submitting Pull Requests](#submitting-pull-requests)
 
 ## General Contributing Guidelines
 
@@ -24,7 +26,7 @@ We strive to make developing Material Components Web as frictionless as possible
 
 ### Setting up your development environment
 
-You'll need a recent version of [nodejs](https://nodejs.org/en/) to work on MDC Web. We [test our builds](https://travis-ci.org/material-components/material-components-web) using both the latest and LTS node versions, so use of one of those is recommended. You can use [nvm](https://github.com/creationix/nvm) to easily install and manage different versions of node on your system.
+You'll need a recent version of [nodejs](https://nodejs.org/en/) to work on MDC Web. We [test our builds](https://travis-ci.com/material-components/material-components-web) using both the latest and LTS node versions, so use of one of those is recommended. You can use [nvm](https://github.com/creationix/nvm) to easily install and manage different versions of node on your system.
 
 > **NOTE**: If you expect to commit updated or new dependencies, please ensure you are using npm 5, which will
 > also update `package-lock.json` correctly when you install or upgrade packages.
@@ -52,30 +54,9 @@ Each component requires the following items in order to be complete:
 - A **foundation class** which is integrated into actual components
 - A **component class** using vanilla JS + SCSS
 - A **README.md** in its subdir which contains developer documentation on the component, including usage.
-- A **set of unit tests** within `test/unit/` with adequate coverage (which we enforce automatically).
-- A **demo page** within `demos/` that shows example usage of the component.
+- A **set of unit tests** within `packages/<mdc-component>/test/` with adequate coverage (which we enforce automatically).
 
 You can find much more information with respect to building components within our [authoring components guide](./docs/authoring-components.md)
-
-### Running development server
-
-#### Local development server
-
-```
-npm run dev
-open http://localhost:8080
-```
-
-`npm run dev` runs a [webpack-dev-server](https://webpack.github.io/docs/webpack-dev-server.html) instance that uses `demos/` as its content base. This should aid you in initial development of a component. It's served on port 8080.
-
-#### App Engine development server
-
-```
-MDC_ENV=development npm run build:demos && gcloud app deploy app.yaml --project google.com:mdc-web-dev --version $USER
-gcloud app browse
-```
-
-The above script will build and deploy the app to MDC Web's dev server with your userid as its version number, you can switch to your version by prepending `$USER-dot-` to the URL opened when you run `gcloud app browse`. This would be helpful if we need to share work-in-progress work within teams and designers.
 
 ### Building MDC Web
 
@@ -99,14 +80,13 @@ npm run fix # Runs both of the above commands in parallel
 
 npm run test:watch # Runs karma on Chrome, re-running when source files change
 
-npm test # Lints all files, runs karma, runs closure tests, and then runs coverage enforcement checks.
+npm test # Lints all files, runs karma, runs typescript tests, and then runs coverage enforcement checks.
 npm run test:unit # Only runs the karma tests
-npm run test:closure # Runs closure build tests against all closurized files
 ```
 
 #### Running Tests across browsers
 
-If you're making big changes or developing new components, we encourage you to be a good citizen and test your changes across browsers! A super simple way to do this is to use [sauce labs](https://saucelabs.com/), which is how we tests our collaborator PRs on TravisCI:
+If you're making big changes or developing new components, we encourage you to be a good citizen and test your changes across browsers! A super simple way to do this is to use [sauce labs](https://saucelabs.com/), which is how we test our collaborator PRs on TravisCI:
 
 1. [Sign up](https://saucelabs.com/beta/signup) for a sauce labs account (choose "Open Sauce" as your selected plan; [it's free](https://saucelabs.com/opensauce/)!)
 2. [Download sauce connect](https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy) for your OS and make sure that the `bin` folder in the downloaded zip is somewhere on your `$PATH`.

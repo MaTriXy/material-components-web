@@ -10,7 +10,7 @@ path: /catalog/buttons/icon-buttons/
 
 <!--<div class="article__asset">
   <a class="article__asset-link"
-     href="https://material-components.github.io/material-components-web-catalog/#/component/icon-toggle">
+     href="https://material-components.github.io/material-components-web-catalog/#/component/icon-button">
     <img src="{{ site.rootpath }}/images/mdc_web_screenshots/icon-toggles.png" width="20" alt="Icon buttons screenshot">
   </a>
 </div>-->
@@ -49,8 +49,9 @@ npm install @material/icon-button
 ### Styles
 
 ```scss
-@import "@material/icon-button/mdc-icon-button";
+@use "@material/icon-button/mdc-icon-button";
 ```
+
 ### JavaScript Instantiation
 
 The icon button will work without JavaScript, but you can enhance it to have a ripple effect by instantiating `MDCRipple` on the root element.
@@ -69,42 +70,69 @@ iconButtonRipple.unbounded = true;
 
 ### Icon Button Toggle
 
-The icon button can be used to toggle between an on and off icon. To style an icon button as an icon button toggle, add the
-`data-toggle-on` and `data-toggle-off` attributes to the `mdc-icon-button` element. Then instantiate an `MDCIconButtonToggle` on the root element.
+The icon button can be used to toggle between an on and off icon. To style an icon button as an icon button toggle, add
+both icons as child elements and place the `mdc-icon-button__icon--on` class on the icon that represents the on element.
+If the button should be initialized in the "on" state, then add the `mdc-icon-button--on` class to the parent `button`.
+Then instantiate an `MDCIconButtonToggle` on the root element.
 
 ```html
 <button id="add-to-favorites"
-   class="mdc-icon-button material-icons"
+   class="mdc-icon-button"
    aria-label="Add to favorites"
-   aria-hidden="true"
-   aria-pressed="false"
-   data-toggle-on-content="favorite"
-   data-toggle-on-label="Remove from favorites"
-   data-toggle-off-content="favorite_border"
-   data-toggle-off-label="Add to favorites">favorites_border</button>
+   aria-pressed="false">
+   <i class="material-icons mdc-icon-button__icon mdc-icon-button__icon--on">favorite</i>
+   <i class="material-icons mdc-icon-button__icon">favorite_border</i>
+</button>
 ```
 
 ```js
-var toggleButton = new mdc.iconButton.MDCIconButtonToggle(document.getElementById('add-to-favorites'));
+import {MDCIconButtonToggle} from '@material/icon-button';
+const iconToggle = new MDCIconButtonToggle(document.querySelector('.mdc-icon-button'));
 ```
 
-#### Icon Button Toggle States
+#### Icon Button Toggle with SVG
 
-Note the use of `data-toggle-*` properties in the above examples. When an MDCIconButtonToggle
-instance is toggled, it looks at these data attributes to determine how to update the element. This is what
-allows MDCIconButtonToggle to be so flexible. The `data-toggle-on-*` properties will be used when the is
-MDCIconButtonToggle is toggled on, and vice versa for `data-toggle-off-*`.
+The icon button toggle can be used with SVGs.
 
-Attribute | Description
---- | ---
-`data-toggle-<TOGGLE STATE>-label` | The value to apply to the element's "aria-label" attribute.
-`data-toggle-<TOGGLE STATE>-content` | The text content to set on the element. Note that if an inner icon is used, the text content will be set on that element instead.
-`data-toggle-<TOGGLE STATE>-class` | A CSS class to apply to the icon element. The same rules regarding inner icon elements described for `content` apply here as well.
+```html
+<button id="star-this-item"
+   class="mdc-icon-button mdc-icon-button--on"
+   aria-label="Unstar this item"
+   aria-pressed="true">
+   <svg class="mdc-icon-button__icon">
+     ...
+   </svg>
+   <svg class="mdc-icon-button__icon mdc-icon-button__icon--on">
+     ...
+  </svg>
+</button>
+```
+
+#### Icon Button Toggle with an Image
+
+The icon button toggle can be used with `img` tags.
+
+```html
+<button id="star-this-item"
+   class="mdc-icon-button mdc-icon-button--on"
+   aria-label="Unstar this item"
+   aria-pressed="true">
+   <img src="" class="mdc-icon-button__icon"/>
+   <img src="" class="mdc-icon-button__icon mdc-icon-button__icon--on"/>
+</button>
+```
 
 ### Icons
 
-The icon button can be used with a standard icon library or an `svg`. The icon button toggle should only be used with
-an standard icon library. We recommend you use [Material Icons](https://material.io/tools/icons) from Google Fonts.
+We recommend using [Material Icons](https://material.io/tools/icons/) from Google Fonts:
+
+```html
+<head>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+```
+
+However, you can also use SVG, [Font Awesome](https://fontawesome.com/), or any other icon library you wish.
 
 ### Disabled
 
@@ -122,6 +150,9 @@ cannot be disabled. Disabled icon buttons cannot be interacted with and have no 
 CSS Class | Description
 --- | ---
 `mdc-icon-button` | Mandatory.
+`mdc-icon-button--on` | This class is applied to the root element and is used to indicate if the icon button toggle is in the "on" state.
+`mdc-icon-button__icon` | This class is applied to each icon element for the icon button toggle.
+`mdc-icon-button__icon--on` | This class is applied to a icon element and is used to indicate the toggle button icon that is represents the "on" icon.
 
 ### Sass Mixins
 
@@ -129,9 +160,11 @@ To customize an icon button's color and properties, you can use the following mi
 
 Mixin | Description
 --- | ---
-`mdc-icon-button-size($width, $height, $padding)` | Sets the width, height, font-size and padding for the icon and ripple. `$height` is optional and defaults to `$width`. `$padding` is optional and defaults to `max($width, $height)/2`. `font-size` is set to `max($width, $height)`.
-`mdc-icon-button-ink-color($color)` | Sets the font color and the ripple color to the provided color value.
-
+`density($density-scale)` | Sets density scale for icon button. Supported density scales range from `-5` to `0`, (`0` being the default).
+`size($size)` | Sets the padding for the icon button based on overall size.
+`icon-size($width, $height, $padding)` | Sets the width, height, font-size and padding for the icon and ripple. `$height` is optional and defaults to `$width`. `$padding` is optional and defaults to `max($width, $height)/2`. `font-size` is set to `max($width, $height)`.
+`ink-color($color)` | Sets the font color and the ripple color to the provided color value.
+`disabled-ink-color($color)` | Sets the font color to the provided color value for a disabled icon button.
 
 ## `MDCIconButtonToggle` Properties and Methods
 
@@ -153,18 +186,14 @@ If you are using a JavaScript framework, such as React or Angular, you can creat
 
 Method Signature | Description
 --- | ---
-`addClass(className: string) => void` | Adds a class to the root element, or the inner icon element.
-`removeClass(className: string) => void` | Removes a class from the root element, or the inner icon element.
-`registerInteractionHandler(type: string, handler: EventListener) => void` | Registers an event handler for an interaction event, such as `click` or `keydown`.
-`deregisterInteractionHandler(type: string, handler: EventListener) => void` | Removes an event handler for an interaction event, such as `click` or `keydown`.
-`setText(text: string) => void` | Sets the text content of the root element, or the inner icon element.
-`getTabIndex() => number` | Returns the tab index of the root element.
-`setTabIndex(tabIndex: number) => void` | Sets the tab index of the root element.
-`getAttr(name: string) => string` | Returns the value of the attribute `name` on the root element. Can also return `null`, similar to `getAttribute()`.
+`addClass(className: string) => void` | Adds a class to the root element.
+`removeClass(className: string) => void` | Removes a class from the root element.
+`hasClass(className: string) => boolean` | Determines whether the root element has the given CSS class name.
 `setAttr(name: string, value: string) => void` | Sets the attribute `name` to `value` on the root element.
-`removeAttr(name: string) => void` | Removes the attribute `name` on the root element.
 `notifyChange(evtData: {isOn: boolean}) => void` | Broadcasts a change notification, passing along the `evtData` to the environment's event handling system. In our vanilla implementation, Custom Events are used for this.
 
 ### Foundation: `MDCIconButtonToggleFoundation`
 
-The foundation does not contain any public properties or methods aside from those inherited from MDCFoundation.
+Method Signature | Description
+--- | ---
+`handleClick()` | Event handler triggered on the click event. It will toggle the icon from on/off and update aria attributes.

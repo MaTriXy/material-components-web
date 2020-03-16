@@ -1,8 +1,12 @@
 {
   "name": "@material/list",
   "description": "The Material Components for the web list component",
-  "version": "0.36.0",
-  "license": "Apache-2.0",
+  "version": "5.1.0",
+  "license": "MIT",
+  "main": "dist/mdc.list.js",
+  "module": "index.js",
+  "sideEffects": false,
+  "types": "dist/mdc.list.d.ts",
   "keywords": [
     "material components",
     "material design",
@@ -10,13 +14,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/material-components/material-components-web.git"
+    "url": "https://github.com/material-components/material-components-web.git",
+    "directory": "packages/mdc-list"
   },
   "dependencies": {
-    "@material/base": "^0.35.0",
-    "@material/ripple": "^0.36.0",
-    "@material/rtl": "^0.36.0",
-    "@material/theme": "^0.35.0",
-    "@material/typography": "^0.35.0"
+    "@material/base": "^5.1.0",
+    "@material/density": "^5.1.0",
+    "@material/dom": "^5.1.0",
+    "@material/feature-targeting": "^5.1.0",
+    "@material/ripple": "^5.1.0",
+    "@material/rtl": "^5.1.0",
+    "@material/shape": "^5.1.0",
+    "@material/theme": "^5.1.0",
+    "@material/typography": "^5.1.0",
+    "tslib": "^1.9.3"
   }
 }

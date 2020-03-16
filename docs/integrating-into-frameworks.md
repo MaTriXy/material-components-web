@@ -43,7 +43,7 @@ The simple approach can be outlined as follows:
    `mdcComponent.destroy()` to clean up the MDC Web component.
 
 This general approach will work for almost all basic use-cases. For an example of this approach,
-check out [this plunk](https://plnkr.co/edit/b4v160c186ErrPG5vNza?p=preview) which
+check out [this plunk](https://plnkr.co/edit/qZl2frDGBT6Ro7jEMbjP?p=preview) which
 shows how to wrap our text field within an angular v1 component, as well as our button (with a
 ripple) within an attribute directive.
 
@@ -52,7 +52,7 @@ and `disconnectedCallback` for destruction.
 
 ### The Advanced Approach: Using foundations and adapters
 
-Many modern front-end libraries/frameworks, such as react and angular2, wind up targeting more than
+Many modern front-end libraries/frameworks, such as react and angular, wind up targeting more than
 just a web browser. For these frameworks - and for some highly advanced application architectures -
 a more robust approach is required. We provide foundations and adapters to accommodate this use
 case.
@@ -63,8 +63,8 @@ case.
 
 Every component comes with a complementary foundation class, which is usually called
 `MDCComponentFoundation`, where `MDCComponent` is the name of a component. For example, we have an
-[MDCMenuFoundation](../packages/mdc-menu/foundation.js) that is used by our
-[MDCMenu](../packages/mdc-menu/index.js) component, and which are both exported
+[MDCMenuFoundation](../packages/mdc-menu/foundation.ts) that is used by our
+[MDCMenu](../packages/mdc-menu/index.ts) component, and which are both exported
 publicly.
 
 In order to implement a component via a foundation, take the following steps:
@@ -89,6 +89,6 @@ are working as hard as we can to make writing adapters as easy and predictable a
 - We plan on creating Type Definitions for our adapters in the future so that TypeScript users can
   validate that their interface conforms correctly to the adapter's specification.
 
-> Please file an issue with us if there are certain snags you've ran into trying to implement an
+> Please [file an issue](https://github.com/material-components/material-components-web/issues/new/choose) with us if there are certain snags you've ran into trying to implement an
   adapter, or if you feel that we can provide better guidance on a particular problem. This is
   definitely something we want to know about.

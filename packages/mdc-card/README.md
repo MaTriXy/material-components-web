@@ -2,7 +2,7 @@
 title: "Cards"
 layout: detail
 section: components
-excerpt: "Cards for displaying content composed of different elements."
+excerpt: "Cards contain content and actions about a single subject."
 iconId: card
 path: /catalog/cards/
 -->
@@ -16,9 +16,7 @@ path: /catalog/cards/
   </a>
 </div>-->
 
-MDC Card is a component that implements the
-[Material Design card component](https://material.io/go/design-cards), and makes it available to
-developers as a set of CSS classes.
+Cards contain content and actions about a single subject.
 
 ## Design & API Documentation
 
@@ -37,42 +35,38 @@ developers as a set of CSS classes.
 npm install @material/card
 ```
 
-## Usage
+## Basic Usage
 
 ### HTML Structure
 
 ```html
 <div class="mdc-card">
-  Simple
-</div>
-```
-
-Fully-featured:
-
-```html
-<div class="mdc-card">
-  <div class="mdc-card__media mdc-card__media--square">
-    <div class="mdc-card__media-content">Title</div>
-  </div>
   <!-- ... content ... -->
-  <div class="mdc-card__actions">
-    <div class="mdc-card__action-buttons">
-      <button class="mdc-button mdc-card__action mdc-card__action--button">Action 1</button>
-      <button class="mdc-button mdc-card__action mdc-card__action--button">Action 2</button>
-    </div>
-    <div class="mdc-card__action-icons">
-      <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Share">share</button>
-      <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="More options">more_vert</button>
-    </div>
-  </div>
 </div>
 ```
 
-Cards don't come with a predefined width, height, padding, or margin. In its simplest form (just a single element with
-`mdc-card`), a card is basically just `mdc-elevation` + `border-radius`.
+> _NOTE_: MDC Card is designed to accommodate a wide variety of use cases.
+> See the [Card Contents](#card-contents) section for information on helpers for specific types of content within cards.
 
-Cards expand horizontally to fill all available space, and vertically to fit their contents.
+### Styles
 
+```css
+@use "@material/card/mdc-card";
+```
+
+In order to remain general-purpose and support e.g. images spanning the full width of the card, MDC Card does not
+include padding styles on the root element. When adding free-form text content to cards, padding should be set to
+`16px`:
+
+```css
+.my-card-content {
+  padding: 16px;
+}
+```
+
+> _NOTE_: MDC Card's predefined classes for content areas (e.g. `mdc-card__actions`) take care of their own padding.
+
+By default, cards expand horizontally to fill all available space, and vertically to fit their contents.
 If you'd like to maintain a consistent width and height across cards, you'll need to set it in your styles:
 
 ```css
@@ -82,21 +76,65 @@ If you'd like to maintain a consistent width and height across cards, you'll nee
 }
 ```
 
-#### Content blocks
+You can also place cards within layout containers, such as [MDC Layout Grid](../mdc-layout-grid)
+or CSS Flexbox or Grid.
 
-Cards are composed of different content blocks, which are typically laid out vertically.
+### JavaScript
 
-Because every app is different, there are no "standard" layouts for card content; each app should define their own.
+MDC Card itself does not require JavaScript. However, if you place interactive components inside your cards,
+you may want to instantiate ripples or other components. For example:
 
-However, MDC Card _does_ provide styles for two common card elements: _rich media_ (images or video) and _actions_.
+```js
+import {MDCRipple} from '@material/ripple';
 
-##### Rich media
-
-```css
-.my-card__media {
-  background-image: url("pretty.jpg");
-}
+const selector = '.mdc-button, .mdc-icon-button, .mdc-card__primary-action';
+const ripples = [].map.call(document.querySelectorAll(selector), function(el) {
+  return new MDCRipple(el);
+});
 ```
+
+> _NOTE_: If your card includes any [icon button toggles](../mdc-icon-button#icon-button-toggle), you will want to
+> instantiate `MDCIconButtonToggle` instead of `MDCRipple`.
+
+## Variants
+
+### Outlined Card
+
+By default, cards are elevated with no outline. You can render unelevated outlined cards instead by adding the
+`mdc-card--outlined` modifier class.
+
+```html
+<div class="mdc-card mdc-card--outlined">
+  <!-- ... content ... -->
+</div>
+```
+
+### Card Contents
+
+MDC Card can be used for a wide variety of use cases, but it includes styles for a few common ones.
+
+#### Primary Action
+
+If a majority of the card (or even the entire card) should be actionable, you can add the `mdc-card__primary-action`
+class to the region to give it MDC Ripple styles. You should also assign `tabindex="0"` to ensure it can also be
+interacted with via keyboard.
+
+```html
+<div class="mdc-card">
+  <div class="mdc-card__primary-action" tabindex="0">
+    <!-- content within actionable area -->
+  </div>
+  <!-- ... content ... -->
+</div>
+```
+
+> _NOTE_: We recommend avoiding adding other actionable items within `mdc-card__primary-action`, due to the overlapping
+> effect of multiple nested elements with ripple and states applied at once.
+
+#### Rich media
+
+This area is used for showing rich media in cards, and optionally as a container. Use the `mdc-card__media` CSS class
+and the [optional modifier classes](#css-classes).
 
 ```html
 <div class="my-card__media mdc-card__media mdc-card__media--16-9">
@@ -104,31 +142,41 @@ However, MDC Card _does_ provide styles for two common card elements: _rich medi
 </div>
 ```
 
-This area is used for showing rich media in cards, and optionally as a container. Use the `mdc-card__media` CSS class
-and the [optional modifier classes](#css-classes).
+```css
+.my-card__media {
+  background-image: url("pretty.jpg");
+}
+```
 
-##### Actions
+#### Actions
+
+This area is used to show different actions the user can take, typically at the bottom of a card.
+It's often used with [buttons](../mdc-button):
 
 ```html
 <div class="mdc-card__actions">
-  <button class="mdc-button mdc-card__action mdc-card__action--button">Action 1</button>
-  <button class="mdc-button mdc-card__action mdc-card__action--button">Action 2</button>
+  <button class="mdc-button mdc-card__action mdc-card__action--button">
+    <div class="mdc-button__ripple"></div>
+    <span class="mdc-button__label">Action 1</span>
+  </button>
+  <button class="mdc-button mdc-card__action mdc-card__action--button">
+    <div class="mdc-button__ripple"></div>
+    <span class="mdc-button__label">Action 2</span>
+  </button>
 </div>
 ```
 
-This area is used for showing different actions the user can take. It's typically used with buttons, as in the example
-above, or with icon buttons, as below:
+It can also be used with [icon buttons](../mdc-icon-button):
 
 ```html
 <div class="mdc-card__actions">
-  <button class="mdc-icon-button material-icons mdc-card__action mdc-card__action--icon"
+  <button class="mdc-icon-button mdc-card__action mdc-card__action--icon"
      aria-pressed="false"
      aria-label="Add to favorites"
-     title="Add to favorites"
-     data-toggle-on-content="favorite"
-     data-toggle-on-label="Remove from favorites"
-     data-toggle-off-content="favorite_border"
-     data-toggle-off-label="Add to favorites">favorite_border</button>
+     title="Add to favorites">
+   <i class="material-icons mdc-icon-button__icon mdc-icon-button__icon--on">favorite</i>
+   <i class="material-icons mdc-icon-button__icon">favorite_border</i>
+  </button>
   <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Share">share</button>
   <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="More options">more_vert</button>
 </div>
@@ -142,8 +190,9 @@ To have a single action button take up the entire width of the action row, use t
 ```html
 <div class="mdc-card__actions mdc-card__actions--full-bleed">
   <a class="mdc-button mdc-card__action mdc-card__action--button" href="#">
-    All Business Headlines
-    <i class="material-icons" aria-hidden="true">arrow_forward</i>
+    <div class="mdc-button__ripple"></div>
+    <span class="mdc-button__label">All Business Headlines</span>
+    <i class="material-icons mdc-button__icon" aria-hidden="true">arrow_forward</i>
   </a>
 </div>
 ```
@@ -154,8 +203,14 @@ elements:
 ```html
 <div class="mdc-card__actions">
   <div class="mdc-card__action-buttons">
-    <button class="mdc-button mdc-card__action mdc-card__action--button">Read</button>
-    <button class="mdc-button mdc-card__action mdc-card__action--button">Bookmark</button>
+    <button class="mdc-button mdc-card__action mdc-card__action--button">
+      <div class="mdc-button__ripple"></div>
+      <span class="mdc-button__label">Read</span>
+    </button>
+    <button class="mdc-button mdc-card__action mdc-card__action--button">
+      <div class="mdc-button__ripple"></div>
+      <span class="mdc-button__label">Bookmark</span>
+    </button>
   </div>
   <div class="mdc-card__action-icons">
    <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Share">share</button>
@@ -164,35 +219,75 @@ elements:
 </div>
 ```
 
-### Styles
-```css
-@import "@material/card/mdc-card";
+##### Icons
+
+We recommend using [Material Icons](https://material.io/tools/icons/) from Google Fonts:
+
+```html
+<head>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
 ```
+
+However, you can also use SVG, [Font Awesome](https://fontawesome.com/), or any other icon library you wish.
+
+#### Combined Example
+
+The following is an example incorporating all of the above elements:
+
+```html
+<div class="mdc-card">
+  <div class="mdc-card__primary-action">
+    <div class="mdc-card__media mdc-card__media--square">
+      <div class="mdc-card__media-content">Title</div>
+    </div>
+    <!-- ... additional primary action content ... -->
+  </div>
+  <div class="mdc-card__actions">
+    <div class="mdc-card__action-buttons">
+      <button class="mdc-button mdc-card__action mdc-card__action--button">
+        <div class="mdc-button__ripple"></div>
+        <span class="mdc-button__label">Action 1</span>
+      </button>
+      <button class="mdc-button mdc-card__action mdc-card__action--button">
+        <div class="mdc-button__ripple"></div>
+        <span class="mdc-button__label">Action 2</span>
+      </button>
+    </div>
+    <div class="mdc-card__action-icons">
+      <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Share">share</button>
+      <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="More options">more_vert</button>
+    </div>
+  </div>
+</div>
+```
+
+## Style Customization
 
 ### CSS Classes
 
 CSS Class | Description
 --- | ---
-`mdc-card` | Mandatory, for the card element
-`mdc-card--outlined` | Removes the shadow and displays a hairline outline instead
-`mdc-card__primary-action` | The main tappable area of the card. Typically contains most (or all) card content _except_ `mdc-card__actions`. Only applicable to cards that have a primary action that the main surface should trigger.
-`mdc-card__media` | Media area that displays a custom `background-image` with `background-size: cover`
-`mdc-card__media--square` | Automatically scales the media area's height to equal its width
-`mdc-card__media--16-9` | Automatically scales the media area's height according to its width, maintaining a 16:9 aspect ratio
-`mdc-card__media-content` | An absolutely-positioned box the same size as the media area, for displaying a title or icon on top of the `background-image`
-`mdc-card__actions` | Row containing action buttons and/or icons
-`mdc-card__actions--full-bleed` | Removes the action area's padding and causes its only child (an `mdc-card__action` element) to consume 100% of the action area's width
-`mdc-card__action-buttons` | A group of action buttons, displayed on the left side of the card (in LTR), adjacent to `mdc-card__action-icons`
-`mdc-card__action-icons` | A group of supplemental action icons, displayed on the right side of the card (in LTR), adjacent to `__action-buttons`
-`mdc-card__action` | An individual action button or icon
-`mdc-card__action--button` | An action button with text
-`mdc-card__action--icon` | An action icon with no text
+`mdc-card` | Mandatory. The main card element.
+`mdc-card--outlined` | Optional. Removes the shadow and displays a hairline outline instead.
+`mdc-card__primary-action` | Optional. The main tappable area of the card. Typically contains most (or all) card content _except_ `mdc-card__actions`. Only applicable to cards that have a primary action that the main surface should trigger.
+`mdc-card__media` | Optional. Media area that displays a custom `background-image` with `background-size: cover`.
+`mdc-card__media--square` | Optional. Automatically scales the media area's height to equal its width.
+`mdc-card__media--16-9` | Optional. Automatically scales the media area's height according to its width, maintaining a 16:9 aspect ratio.
+`mdc-card__media-content` | Optional. An absolutely-positioned box the same size as the media area, for displaying a title or icon on top of the `background-image`.
+`mdc-card__actions` | Optional. Row containing action buttons and/or icons.
+`mdc-card__actions--full-bleed` | Optional. Removes the action area's padding and causes its only child (an `mdc-card__action` element) to consume 100% of the action area's width.
+`mdc-card__action-buttons` | Optional. A group of action buttons, displayed on the left side of the card (in LTR), adjacent to `mdc-card__action-icons`.
+`mdc-card__action-icons` | Optional. A group of supplemental action icons, displayed on the right side of the card (in LTR), adjacent to `__action-buttons`.
+`mdc-card__action` | Optional. An individual action button or icon.
+`mdc-card__action--button` | Optional. An action button with text.
+`mdc-card__action--icon` | Optional. An action icon with no text. We recommend using [Material Icons](https://material.io/tools/icons/) from Google Fonts.
 
 ### Sass Mixins
 
 Mixin | Description
 --- | ---
-`mdc-card-fill-color($color)` | Sets the fill color of a card
-`mdc-card-outline($color, $thickness)` | Sets the color and thickness of a card's outline (but does _not_ remove its shadow)
-`mdc-card-corner-radius($radius)` | Sets the corner radius of a card
-`mdc-card-media-aspect-ratio($x, $y)` | Maintains the given aspect ratio on a `mdc-card__media` subelement by dynamically scaling its height relative to its width
+`fill-color($color)` | Sets the fill color of a card.
+`outline($color, $thickness)` | Sets the color and thickness of a card's outline (but does _not_ remove its shadow).
+`shape-radius($radius, $rtl-reflexive)` | Sets the rounded shape to card with given radius size. Set `$rtl-reflexive` to true to flip radius values in RTL context, defaults to false.
+`media-aspect-ratio($x, $y)` | Maintains the given aspect ratio on a `mdc-card__media` subelement by dynamically scaling its height relative to its width.
