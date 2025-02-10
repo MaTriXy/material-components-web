@@ -22,8 +22,7 @@
  */
 
 import {verifyDefaultAdapter} from '../../../testing/helpers/foundation';
-import {setUpFoundationTest} from '../../../testing/helpers/setup';
-import {setUpMdcTestEnvironment} from '../../../testing/helpers/setup';
+import {setUpFoundationTest, setUpMdcTestEnvironment} from '../../../testing/helpers/setup';
 import {Corner, cssClasses, numbers, strings} from '../constants';
 import {MDCMenuSurfaceFoundation} from '../foundation';
 
@@ -33,11 +32,15 @@ function setupTest() {
   const size = {width: 500, height: 200};
   mockAdapter.hasClass.withArgs(cssClasses.ROOT).and.returnValue(true);
   mockAdapter.hasClass.withArgs(cssClasses.OPEN).and.returnValue(false);
-  mockAdapter.getWindowDimensions.and.returnValue(
+  mockAdapter.getViewportDimensions.and.returnValue(
       {width: window.innerWidth, height: window.innerHeight});
   mockAdapter.getInnerDimensions.and.returnValue(size);
 
   return {foundation, mockAdapter};
+}
+
+interface WithIsSurfaceOpen {
+  isSurfaceOpen: boolean;
 }
 
 // Various anchor dimensions.
@@ -121,6 +124,14 @@ const wideTopLeft: AnchorDimension = {
   left: 20,
   right: 170
 };
+const closeToBottom: AnchorDimension = {
+  height: 20,
+  width: 40,
+  top: 800,
+  bottom: 820,
+  left: 480,
+  right: 520
+};
 
 /**
  * Initializes viewport, anchor and menu surface dimensions. Viewport is
@@ -138,7 +149,8 @@ function initAnchorLayout(
       y: 0
     }) {
   mockAdapter.hasAnchor.and.returnValue(true);
-  mockAdapter.getWindowDimensions.and.returnValue({height: 1000, width: 1000});
+  mockAdapter.getViewportDimensions.and.returnValue(
+      {height: 1000, width: 1000});
   mockAdapter.getAnchorDimensions.and.returnValue(anchorDimensions);
   mockAdapter.isRtl.and.returnValue(isRtl);
   mockAdapter.getInnerDimensions.and.returnValue(
@@ -183,7 +195,9 @@ describe('MDCMenuSurfaceFoundation', () => {
       'hasClass',
       'hasAnchor',
       'notifyClose',
+      'notifyClosing',
       'notifyOpen',
+      'notifyOpening',
       'isElementInContainer',
       'isRtl',
       'setTransformOrigin',
@@ -192,11 +206,13 @@ describe('MDCMenuSurfaceFoundation', () => {
       'restoreFocus',
       'getInnerDimensions',
       'getAnchorDimensions',
-      'getWindowDimensions',
+      'getViewportDimensions',
       'getBodyDimensions',
       'getWindowScroll',
       'setPosition',
       'setMaxHeight',
+      'registerWindowEventHandler',
+      'deregisterWindowEventHandler'
     ]);
   });
 
@@ -253,6 +269,13 @@ describe('MDCMenuSurfaceFoundation', () => {
       });
 
   testFoundation(
+      '#open emits the opening event at the beginning of the animation',
+      ({foundation, mockAdapter}) => {
+        foundation.open();
+        expect(mockAdapter.notifyOpening).toHaveBeenCalled();
+      });
+
+  testFoundation(
       '#open emits the open event at the end of the animation',
       ({foundation, mockAdapter}) => {
         foundation.open();
@@ -268,9 +291,16 @@ describe('MDCMenuSurfaceFoundation', () => {
       ({foundation, mockAdapter}) => {
         foundation.setQuickOpen(true);
         foundation.open();
-        jasmine.clock().tick(1);  // Run to frame.
-        jasmine.clock().tick(1);  // Run to frame.
         expect(mockAdapter.notifyOpen).toHaveBeenCalled();
+      });
+
+  testFoundation(
+      '#open does not emit event when already closed',
+      ({foundation, mockAdapter}) => {
+        foundation.setQuickOpen(true);
+        foundation.open();
+        foundation.open();
+        expect(mockAdapter.notifyOpen).toHaveBeenCalledTimes(1);
       });
 
   /** Testing various layout cases for autopositioning */
@@ -492,6 +522,22 @@ describe('MDCMenuSurfaceFoundation', () => {
       });
 
   testFoundation(
+      '#open from anchor in top left of viewport, absolute position, hoisted menu surface, horizontally centered on viewport ' +
+          '5px/10px',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopLeft, true, 200, {x: 5, y: 10});
+        foundation.setIsHoisted(true);
+        foundation.setIsHorizontallyCenteredOnViewport(true);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin).toHaveBeenCalledWith('left top');
+        expect(mockAdapter.setPosition).toHaveBeenCalledWith({
+          left: (mockAdapter.getViewportDimensions().width - 100) / 2,
+          top: 30
+        });
+      });
+
+  testFoundation(
       '#open in absolute position at x/y=100, absolute position, hoisted menu surface, scrollX/scrollY ' +
           '5px/10px',
       ({foundation, mockAdapter}) => {
@@ -591,6 +637,17 @@ describe('MDCMenuSurfaceFoundation', () => {
       });
 
   testFoundation(
+      '#open tall surface restricts max height if set',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallAboveMiddleLeft, false, 700);
+        foundation.setAnchorCorner(Corner.BOTTOM_START);
+        foundation.setMaxHeight(150);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setMaxHeight).toHaveBeenCalledWith('150px');
+      });
+
+  testFoundation(
       '#open tall surface from small anchor in left above middle of viewport, BOTTOM_START anchor corner, LTR',
       ({foundation, mockAdapter}) => {
         initAnchorLayout(mockAdapter, smallAboveMiddleLeft, false, 700);
@@ -646,6 +703,20 @@ describe('MDCMenuSurfaceFoundation', () => {
       '#open from wide anchor center of viewport, BOTTOM_START anchor corner, RTL',
       ({foundation, mockAdapter}) => {
         initAnchorLayout(mockAdapter, wideCenter, true);
+        foundation.setAnchorCorner(Corner.BOTTOM_START);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('center top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: 0, top: 20});
+      });
+
+  testFoundation(
+      '#open from anchor center of viewport with large menu surface height, ' +
+          'BOTTOM_START anchor corner',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, wideCenter, true, 500);
         foundation.setAnchorCorner(Corner.BOTTOM_START);
         foundation.open();
         jasmine.clock().tick(1);  // Run to frame.
@@ -799,8 +870,172 @@ describe('MDCMenuSurfaceFoundation', () => {
       });
 
   testFoundation(
+      'Should return the correct fixed position status', ({foundation}) => {
+        expect(foundation.isFixed()).toBeFalse();
+        foundation.setFixedPosition(true);
+        expect(foundation.isFixed()).toBeTrue();
+      });
+
+  testFoundation(
+      '#open from close to bottom of viewport, menu should autoposition to open upwards',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, closeToBottom);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('left bottom');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({left: 0, bottom: -0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from right side in LTR when corner is flipped horizontally.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallCenter);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('right top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from right side in LTR when corner is flipped horizontally and anchor is wider than menu.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, wideTopLeft);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('center top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from left side in LTR when corner is flipped horizontally and space is not available on the left side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopLeft);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin).toHaveBeenCalledWith('left top');
+        expect(mockAdapter.setPosition).toHaveBeenCalledWith({left: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from right side in LTR when corner is flipped horizontally and space is not available on the right side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopRight);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('right top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is still positioned from right side in LTR when corner is flipped horizontally with anchor margin to provide enough space on the left side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopLeft);
+        foundation.flipCornerHorizontally();
+        // Set the displacement far enough to account for the surface width.
+        const xDisplacement = 113;
+        foundation.setAnchorMargin(
+            {left: xDisplacement, right: -xDisplacement});
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('right top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: -xDisplacement, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from left side in RTL when corner is flipped horizontally.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallCenter, /* isRtl */ true);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin).toHaveBeenCalledWith('left top');
+        expect(mockAdapter.setPosition).toHaveBeenCalledWith({left: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from left side in RTL when corner is flipped horizontally and space is not available on the left side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopLeft, /* isRtl */ true);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin).toHaveBeenCalledWith('left top');
+        expect(mockAdapter.setPosition).toHaveBeenCalledWith({left: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is positioned from right side in RTL when corner is flipped horizontally and space is not available on the right side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopRight, /* isRtl */ true);
+        foundation.flipCornerHorizontally();
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin)
+            .toHaveBeenCalledWith('right top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({right: 0, top: 0});
+      });
+
+  testFoundation(
+      '#open Surface is still positioned from left side in RTL when corner is flipped horizontally with anchor margin to provide enough space on the right side.',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopRight, /* isRtl */ true);
+        foundation.flipCornerHorizontally();
+        // Set the displacement far enough to account for the surface width.
+        const xDisplacement = 113;
+        foundation.setAnchorMargin(
+            {left: -xDisplacement, right: xDisplacement});
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.setTransformOrigin).toHaveBeenCalledWith('left top');
+        expect(mockAdapter.setPosition)
+            .toHaveBeenCalledWith({left: -xDisplacement, top: 0});
+      });
+
+  testFoundation(
+      '#open adds the open-below class to the menu surface, from small anchor in top of viewport',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallTopLeft);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.addClass)
+            .toHaveBeenCalledWith(cssClasses.IS_OPEN_BELOW);
+      });
+
+  testFoundation(
+      '#open does not add the open-below class to the menu surface, from small anchor in bottom of viewport',
+      ({foundation, mockAdapter}) => {
+        initAnchorLayout(mockAdapter, smallBottomLeft);
+        foundation.open();
+        jasmine.clock().tick(1);  // Run to frame.
+        expect(mockAdapter.addClass)
+            .not.toHaveBeenCalledWith(cssClasses.IS_OPEN_BELOW);
+      });
+
+  testFoundation(
+      '#open registers window resize listener', ({foundation, mockAdapter}) => {
+        foundation.open();
+        expect(mockAdapter.registerWindowEventHandler).toHaveBeenCalled();
+      });
+
+  testFoundation(
       '#close adds the animation class to start an animation',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         foundation.close();
         expect(mockAdapter.addClass)
             .toHaveBeenCalledWith(cssClasses.ANIMATING_CLOSED);
@@ -820,6 +1055,7 @@ describe('MDCMenuSurfaceFoundation', () => {
   testFoundation(
       '#close removes the open class from the menu surface',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         foundation.close();
         jasmine.clock().tick(1);  // Run to frame.
         jasmine.clock().tick(1);  // Run to frame.
@@ -829,6 +1065,7 @@ describe('MDCMenuSurfaceFoundation', () => {
   testFoundation(
       '#close removes the animation class at the end of the animation',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         foundation.close();
         jasmine.clock().tick(1);  // Run to frame.
         jasmine.clock().tick(1);  // Run to frame.
@@ -844,6 +1081,7 @@ describe('MDCMenuSurfaceFoundation', () => {
   testFoundation(
       '#close emits the close event at the end of the animation',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         foundation.close();
         jasmine.clock().tick(1);  // Run to frame.
         jasmine.clock().tick(1);  // Run to frame.
@@ -853,34 +1091,51 @@ describe('MDCMenuSurfaceFoundation', () => {
       });
 
   testFoundation(
+      '#close emits the closing event immediately',
+      ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
+        foundation.close();
+        expect(mockAdapter.notifyClosing).toHaveBeenCalled();
+      });
+
+  testFoundation(
       '#close emits the close event when quickOpen is true',
+      ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
+        foundation.setQuickOpen(true);
+        foundation.close();
+        expect(mockAdapter.notifyClose).toHaveBeenCalled();
+      });
+
+  testFoundation(
+      '#close does not emit event when already closed',
       ({foundation, mockAdapter}) => {
         foundation.setQuickOpen(true);
         foundation.close();
-        jasmine.clock().tick(1);  // Run to frame.
-        jasmine.clock().tick(1);  // Run to frame.
-        expect(mockAdapter.notifyClose).toHaveBeenCalled();
+        expect(mockAdapter.notifyClose).toHaveBeenCalledTimes(0);
       });
 
   testFoundation(
       '#close causes restoreFocus to be called if the menu-surface has focus',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         mockAdapter.isFocused.and.returnValue(true);
         foundation.setQuickOpen(true);
         foundation.close();
-        jasmine.clock().tick(1);  // Run to frame.
+        jasmine.clock().tick(numbers.TOUCH_EVENT_WAIT_MS);
         expect(mockAdapter.restoreFocus).toHaveBeenCalled();
       });
 
   testFoundation(
       '#close causes restoreFocus to be called if an element within the menu-surface has focus',
       ({foundation, mockAdapter}) => {
+        (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
         mockAdapter.isFocused.and.returnValue(false);
         mockAdapter.isElementInContainer.withArgs(jasmine.anything())
             .and.returnValue(true);
         foundation.setQuickOpen(true);
         foundation.close();
-        jasmine.clock().tick(1);  // Run to frame.
+        jasmine.clock().tick(numbers.TOUCH_EVENT_WAIT_MS);
         expect(mockAdapter.restoreFocus).toHaveBeenCalled();
       });
 
@@ -892,8 +1147,16 @@ describe('MDCMenuSurfaceFoundation', () => {
             .and.returnValue(false);
         foundation.setQuickOpen(true);
         foundation.close();
-        jasmine.clock().tick(1);  // Run to frame.
+        jasmine.clock().tick(numbers.TOUCH_EVENT_WAIT_MS);
         expect(mockAdapter.restoreFocus).not.toHaveBeenCalled();
+      });
+
+  testFoundation(
+      '#close deregisters window resize listener',
+      ({foundation, mockAdapter}) => {
+        foundation.open();
+        foundation.close();
+        expect(mockAdapter.deregisterWindowEventHandler).toHaveBeenCalled();
       });
 
   it('#isOpen returns true when the menu surface is open', () => {
@@ -932,8 +1195,9 @@ describe('MDCMenuSurfaceFoundation', () => {
      () => {
        const {foundation, mockAdapter} = setupTest();
        const target = {};
-       const event = {target, key: 'Escape'};
+       const event = {target, key: 'Escape'} as KeyboardEvent;
 
+       (foundation as unknown as WithIsSurfaceOpen).isSurfaceOpen = true;
        foundation.init();
        foundation.handleKeydown(event);
        jasmine.clock().tick(1);  // Run to frame.
@@ -946,8 +1210,9 @@ describe('MDCMenuSurfaceFoundation', () => {
      () => {
        const {foundation} = setupTest();
        const target = {};
-       const preventDefault = jasmine.createSpy('event.preventDefault');
-       const event = {target, key: 'Foo', preventDefault};
+       const preventDefault =
+           jasmine.createSpy('event.preventDefault') as Function;
+       const event = {target, key: 'Foo', preventDefault} as KeyboardEvent;
 
        foundation.init();
        foundation.handleKeydown(event);
@@ -958,9 +1223,9 @@ describe('MDCMenuSurfaceFoundation', () => {
 
   it('#handleBodyClick event closes the menu surface', () => {
     const {foundation, mockAdapter} = setupTest();
-    const mockEvt = {
+    const mockevent = {
       target: {},
-    };
+    } as MouseEvent;
 
     mockAdapter.hasClass.withArgs(MDCMenuSurfaceFoundation.cssClasses.OPEN)
         .and.returnValue(true);
@@ -972,7 +1237,7 @@ describe('MDCMenuSurfaceFoundation', () => {
     jasmine.clock().tick(numbers.TRANSITION_OPEN_DURATION);
     jasmine.clock().tick(1);  // Run to frame.
 
-    foundation.handleBodyClick(mockEvt);
+    foundation.handleBodyClick(mockevent);
     jasmine.clock().tick(1);  // Run to frame.
 
     expect(mockAdapter.removeClass).toHaveBeenCalledWith(cssClasses.OPEN);
@@ -980,15 +1245,15 @@ describe('MDCMenuSurfaceFoundation', () => {
 
   it('on menu surface click does not emit close', () => {
     const {foundation, mockAdapter} = setupTest();
-    const mockEvt = {
+    const mockevent = {
       target: {},
-    };
+    } as MouseEvent;
     mockAdapter.isElementInContainer.withArgs(jasmine.anything())
         .and.returnValue(true);
     foundation.init();
     foundation.open();
     jasmine.clock().tick(1);  // Run to frame.
-    foundation.handleBodyClick(mockEvt);
+    foundation.handleBodyClick(mockevent);
     jasmine.clock().tick(1);  // Run to frame.
     expect(mockAdapter.notifyClose).not.toHaveBeenCalled();
   });

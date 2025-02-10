@@ -30,29 +30,21 @@ class FakeComponent extends MDCComponent<MDCFoundation> {
   initializeComesBeforeFoundation!: boolean;
   synced!: boolean;
 
-  get root() {
-    return this.root_;
-  }
-
-  get foundation() {
-    return this.foundation_;
-  }
-
-  getDefaultFoundation() {
+  override getDefaultFoundation() {
     const defaultFoundation = {
       isDefaultFoundation: true,
       init: jasmine.createSpy('init'),
-      rootElementAtTimeOfCall: this.root_,
+      rootElementAtTimeOfCall: this.root,
     } as any;
     return defaultFoundation;
   }
 
-  initialize(...args: unknown[]) {
+  override initialize(...args: unknown[]) {
     this.initializeArgs = args;
-    this.initializeComesBeforeFoundation = !this.foundation_;
+    this.initializeComesBeforeFoundation = !this.foundation;
   }
 
-  initialSyncWithDOM() {
+  override initialSyncWithDOM() {
     this.synced = true;
   }
 }
@@ -65,26 +57,26 @@ describe('MDCComponent', () => {
        expect(b instanceof MDCComponent).toBeTruthy();
      });
 
-  it('takes a root node constructor param and assigns it to the "root_" property',
+  it('takes a root node constructor param and assigns it to the "root" property',
      () => {
        const root = document.createElement('div');
        const f = new FakeComponent(root);
-       expect(f.root).toEqual(root);
+       expect(f['root']).toEqual(root);
      });
 
-  it('takes an optional foundation constructor param and assigns it to the "foundation_" property',
+  it('takes an optional foundation constructor param and assigns it to the "foundation" property',
      () => {
        const root = document.createElement('div');
        const foundation = {init: () => {}} as any;
        const f = new FakeComponent(root, foundation);
-       expect(f.foundation).toEqual(foundation);
+       expect(f['foundation']).toEqual(foundation);
      });
 
-  it('assigns the result of "getDefaultFoundation()" to "foundation_" by default',
+  it('assigns the result of "getDefaultFoundation()" to "foundation" by default',
      () => {
        const root = document.createElement('div');
        const f = new FakeComponent(root);
-       expect((f.foundation as any).isDefaultFoundation).toBeTruthy();
+       expect((f['foundation'] as any).isDefaultFoundation).toBeTruthy();
      });
 
   it('calls the foundation\'s init() method within the constructor', () => {
@@ -160,21 +152,21 @@ describe('MDCComponent', () => {
     const root = document.createElement('div');
     const f = new FakeComponent(root);
     const handler = jasmine.createSpy('eventHandler');
-    let evt: any = null;
-    handler.withArgs(jasmine.any(Object)).and.callFake((evt_) => {
-      evt = evt_;
+    let event: any = null;
+    handler.withArgs(jasmine.any(Object)).and.callFake((e: any) => {
+      event = e;
     });
-    const data = {evtData: true};
+    const data = {eventData: true};
     const type = 'customeventtype';
 
     root.addEventListener(type, handler);
     f.emit(type, data);
 
-    expect(evt !== null).toBeTruthy();
-    // assertion above ensures non-null evt, but compiler doesn't know this
+    expect(event !== null).toBeTruthy();
+    // assertion above ensures non-null event, but compiler doesn't know this
     // tslint:disable:no-unnecessary-type-assertion
-    expect(evt!.type).toEqual(type);
-    expect(evt!.detail).toEqual(data);
+    expect(event!.type).toEqual(type);
+    expect(event!.detail).toEqual(data);
     // tslint:enable:no-unnecessary-type-assertion
   });
 
@@ -183,11 +175,11 @@ describe('MDCComponent', () => {
        const root = document.createElement('div');
        const f = new FakeComponent(root);
        const handler = jasmine.createSpy('eventHandler');
-       let evt: any = null;
-       handler.withArgs(jasmine.any(Object)).and.callFake((evt_) => {
-         evt = evt_;
+       let event: any = null;
+       handler.withArgs(jasmine.any(Object)).and.callFake((e: any) => {
+         event = e;
        });
-       const data = {evtData: true};
+       const data = {eventData: true};
        const type = 'customeventtype';
 
        root.addEventListener(type, handler);
@@ -200,18 +192,18 @@ describe('MDCComponent', () => {
          (window as any).CustomEvent = CustomEvent;
        }
 
-       expect(evt !== null).toBeTruthy();
-       // assertion above ensures non-null evt, but compiler doesn't know this
+       expect(event !== null).toBeTruthy();
+       // assertion above ensures non-null event, but compiler doesn't know this
        // tslint:disable:no-unnecessary-type-assertion
-       expect(evt!.type).toEqual(type);
-       expect(evt!.detail).toEqual(data);
+       expect(event!.type).toEqual(type);
+       expect(event!.detail).toEqual(data);
        // tslint:enable:no-unnecessary-type-assertion
      });
 
-  it('(regression) ensures that this.root_ is available for use within getDefaultFoundation()',
+  it('(regression) ensures that this.root is available for use within getDefaultFoundation()',
      () => {
        const root = document.createElement('div');
        const f = new FakeComponent(root);
-       expect((f.foundation as any).rootElementAtTimeOfCall).toEqual(root);
+       expect((f['foundation'] as any).rootElementAtTimeOfCall).toEqual(root);
      });
 });

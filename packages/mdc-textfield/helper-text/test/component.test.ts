@@ -22,17 +22,13 @@
  */
 
 
+import {createFixture, html} from '../../../../testing/dom';
 import {MDCTextFieldHelperText} from '../../../mdc-textfield/helper-text/index';
 
 const getFixture = () => {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  return createFixture(html`
   <div class="mdc-textfield__helper-text"></div>
-`;
-
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+`);
 };
 
 describe('MDCTextFieldHelperText', () => {
@@ -51,34 +47,39 @@ describe('MDCTextFieldHelperText', () => {
 
   it('#adapter.addClass adds a class to the element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('#adapter.removeClass removes a class from the element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('#adapter.hasClass returns whether or not the element contains a certain class',
      () => {
        const {root, component} = setupTest();
        root.classList.add('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
+       expect((component.getDefaultFoundation() as any).adapter.hasClass('foo'))
            .toBeTruthy();
        root.classList.remove('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
+       expect((component.getDefaultFoundation() as any).adapter.hasClass('foo'))
            .toBeFalsy();
      });
+
+  it('#adapter.getAttr retrieves a given attribute from the element', () => {
+    const {root, component} = setupTest();
+    root.setAttribute('foobar', 'baz');
+    expect(component.getDefaultFoundation()['adapter'].getAttr('foobar'))
+        .toEqual('baz');
+  });
 
   it('#adapter.setAttr adds a given attribute to the element', () => {
     const {root, component} = setupTest();
     (component.getDefaultFoundation() as any)
-        .adapter_.setAttr('aria-label', 'foo');
+        .adapter.setAttr('aria-label', 'foo');
     expect(root.getAttribute('aria-label')).toEqual('foo');
   });
 
@@ -86,13 +87,13 @@ describe('MDCTextFieldHelperText', () => {
     const {root, component} = setupTest();
     root.setAttribute('aria-label', 'foo');
     (component.getDefaultFoundation() as any)
-        .adapter_.removeAttr('aria-label', 'foo');
+        .adapter.removeAttr('aria-label', 'foo');
     expect(root.hasAttribute('aria-label')).toBeFalsy();
   });
 
   it('#adapter.setContent sets the text content of the element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.setContent('foo');
+    (component.getDefaultFoundation() as any).adapter.setContent('foo');
     expect(root.textContent).toEqual('foo');
   });
 });

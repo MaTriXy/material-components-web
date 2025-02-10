@@ -58,6 +58,7 @@ CSS Class | Description
 `mdc-floating-label` | Mandatory.
 `mdc-floating-label--float-above` | Indicates the label is floating in the floating position.
 `mdc-floating-label--shake` | Shakes the label.
+`mdc-floating-label--required` | Indicates the label is required and adds an asterisk.
 
 ### Sass Mixins
 
@@ -69,6 +70,7 @@ Mixin | Description
 `shake-animation($modifier)` | Applies shake keyframe animation to label.
 `float-position($positionY, $positionX, $scale)` | Sets position of label when floating.
 `max-width($max-width)` | Sets the max width of the label.
+`float-transition($duration-ms, $timing-function)` | Customizes the duration and optional timing function for the "float" transition.
 
 ## `MDCFloatingLabel` Properties and Methods
 
@@ -76,6 +78,7 @@ Method Signature | Description
 --- | ---
 `shake(shouldShake: boolean) => void` | Proxies to the foundation's `shake()` method.
 `float(shouldFloat: boolean) => void` | Proxies to the foundation's `float()` method.
+`setRequired(isRequired: boolean) => void` | Proxies to the foundation's `setRequired()` method.
 `getWidth() => number` | Proxies to the foundation's `getWidth()` method.
 
 ## Usage Within Frameworks
@@ -89,8 +92,8 @@ Method Signature | Description
 `addClass(className: string) => void` | Adds a class to the label element.
 `removeClass(className: string) => void` | Removes a class from the label element.
 `getWidth() => number` | Returns the width of the label element.
-`registerInteractionHandler(evtType: string, handler: EventListener) => void` | Registers an event listener for a given event.
-`deregisterInteractionHandler(evtType: string, handler: EventListener) => void` | Deregisters an event listener for a given event.
+`registerInteractionHandler(eventType: string, handler: EventListener) => void` | Registers an event listener for a given event.
+`deregisterInteractionHandler(eventType: string, handler: EventListener) => void` | Deregisters an event listener for a given event.
 
 ### `MDCFloatingLabelFoundation`
 
@@ -98,4 +101,5 @@ Method Signature | Description
 --- | ---
 `shake(shouldShake: boolean)` | Shakes or stops shaking the label, depending on the value of `shouldShake`.
 `float(shouldFloat: boolean)` | Floats or docks the label, depending on the value of `shouldFloat`.
+`setRequired(isRequired: boolean)` | Styles the label as required, depending on the value of `isRequired`.
 `getWidth() => number` | Returns the width of the label element.

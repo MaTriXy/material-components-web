@@ -1,55 +1,47 @@
 <!--docs:
-title: "Text Field"
+title: "Text field"
 layout: detail
 section: components
+excerpt: "MDC Web text field"
 iconId: text_field
 path: /catalog/input-controls/text-field/
 -->
 
-# Text Field
+# Text field
 
-Text fields allow users to input, edit, and select text.
+[Text fields](https://material.io/components/text-fields) let users enter and edit text.
 
-## Design & API Documentation
+For more information, see the [API](#api) documentation.
 
-<ul class="icon-list">
-  <li class="icon-list-item icon-list-item--spec">
-    <a href="https://material.io/go/design-text-fields">Material Design guidelines: Text Fields</a>
-  </li>
-  <li class="icon-list-item icon-list-item--link">
-    <a href="https://material-components.github.io/material-components-web-catalog/#/component/text-field">Demo</a>
-  </li>
-</ul>
+The text field class consists of the following types:
 
-## Installation
+* [Filled text](#filled-text)
+* [Outlined text](#outlined-text)
+
+<img src="images/text-field-generic.png" alt="Text field examples of both filled and outlined types, and each type showing both inactive and focused states.">
+
+## Using text fields
+
+Text fields allow users to enter text into a UI. They typically appear in forms and dialogs.
+
+### Installation
 
 ```
 npm install @material/textfield
 ```
 
-## Basic Usage
-
-### HTML Structure
-
-```html
-<label class="mdc-text-field">
-  <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id">
-  <span class="mdc-floating-label" id="my-label-id">Hint text</span>
-  <span class="mdc-line-ripple"></span>
-</label>
-```
-
-> NOTE: For more details, see [MDC Line Ripple](../mdc-line-ripple/README.md)
-> and [MDC Floating Label](../mdc-floating-label/README.md).
-
 ### Styles
 
 ```scss
-@use "@material/textfield/mdc-text-field";
+@use "@material/floating-label/mdc-floating-label";
+@use "@material/line-ripple/mdc-line-ripple";
+@use "@material/notched-outline/mdc-notched-outline";
+@use "@material/textfield";
+
+@include textfield.core-styles;
 ```
 
-### JavaScript Instantiation
+### JavaScript instantiation
 
 ```js
 import {MDCTextField} from '@material/textfield';
@@ -57,50 +49,31 @@ import {MDCTextField} from '@material/textfield';
 const textField = new MDCTextField(document.querySelector('.mdc-text-field'));
 ```
 
-> See [Importing the JS component](../../docs/importing-js.md) for more information on how to import JavaScript.
+**Note: See [Importing the JS component](../../docs/importing-js.md) for more information on how to import JavaScript.**
 
-## Variants
+## Filled text
 
-### Full Width
+[Filled text fields](https://material.io/components/text-fields/#filled-text-field) have more visual emphasis than outlined text fields, making them stand out when surrounded by other content and components.
 
-Full width text fields are useful for in-depth tasks or entering complex information.
+### Filled text example
 
 ```html
-<label class="mdc-text-field mdc-text-field--fullwidth">
+<label class="mdc-text-field mdc-text-field--filled">
   <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input"
-         type="text"
-         placeholder="Full-Width Text Field"
-         aria-label="Full-Width Text Field">
+  <span class="mdc-floating-label" id="my-label-id">Hint text</span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id">
   <span class="mdc-line-ripple"></span>
 </label>
 ```
 
-> _NOTE_: Do not use `mdc-text-field--outlined` to style a full width text field.
+## Outlined text
 
-> _NOTE_: Do not use `mdc-floating-label` within `mdc-text-field--fullwidth`. Labels should not be
-included as part of the DOM structure of a full width text field.
+[Outlined text fields](https://material.io/components/text-fields/#outlined-text-field) have less visual emphasis than filled text fields. When they appear in places like forms, where many text fields are placed together, their reduced emphasis helps simplify the layout.
 
-### Textarea
-
-```html
-<label class="mdc-text-field mdc-text-field--textarea">
-  <textarea class="mdc-text-field__input" aria-labelledby="my-label-id" rows="8" cols="40"></textarea>
-  <span class="mdc-notched-outline">
-    <span class="mdc-notched-outline__leading"></span>
-    <span class="mdc-notched-outline__notch">
-      <label class="mdc-floating-label" id="my-label-id">Textarea Label</label>
-    </span>
-    <span class="mdc-notched-outline__trailing"></span>
-  </span>
-</label>
-```
-
-### Outlined
+### Outlined text example
 
 ```html
 <label class="mdc-text-field mdc-text-field--outlined">
-  <input type="text" class="mdc-text-field__input" aria-labelledby="my-label-id">
   <span class="mdc-notched-outline">
     <span class="mdc-notched-outline__leading"></span>
     <span class="mdc-notched-outline__notch">
@@ -108,27 +81,47 @@ included as part of the DOM structure of a full width text field.
     </span>
     <span class="mdc-notched-outline__trailing"></span>
   </span>
+  <input type="text" class="mdc-text-field__input" aria-labelledby="my-label-id">
 </label>
 ```
 
 See [here](../mdc-notched-outline/) for more information on using the notched outline sub-component.
 
-> _NOTE_: Do not use `mdc-line-ripple` inside of `mdc-text-field` _if you plan on using `mdc-text-field--outlined`_. Line Ripple should not be included as part of the DOM structure of an outlined text field.
+**Note: Do not use `mdc-line-ripple` inside of `mdc-text-field` _if you plan on using `mdc-text-field--outlined`_. Line Ripple should not be included as part of the DOM structure of an outlined text field.**
 
-### Disabled
+## Other variations
 
-To disable the text field, add the `disabled` attribute to the `<input>` element and add the `mdc-text-field--disabled` class to the `mdc-text-field` element.
+### Textarea
+
+#### Filled
 
 ```html
-<label class="mdc-text-field mdc-text-field--disabled">
+<label class="mdc-text-field mdc-text-field--filled mdc-text-field--textarea mdc-text-field--no-label">
   <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" disabled>
-  <span class="mdc-floating-label" id="my-label-id">Disabled text field</span>
+  <span class="mdc-text-field__resizer">
+    <textarea class="mdc-text-field__input" rows="8" cols="40" aria-label="Label"></textarea>
+  </span>
   <span class="mdc-line-ripple"></span>
 </label>
 ```
 
-### Text Field without label
+#### Outlined
+
+```html
+<label class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--no-label">
+  <span class="mdc-notched-outline">
+    <span class="mdc-notched-outline__leading"></span>
+    <span class="mdc-notched-outline__trailing"></span>
+  </span>
+  <span class="mdc-text-field__resizer">
+    <textarea class="mdc-text-field__input" rows="8" cols="40" aria-label="Label"></textarea>
+  </span>
+</label>
+```
+
+**Note: The `mdc-text-field__resizer` element may be omitted for a non-resizable textarea.**
+
+### Text field without label
 
 A text field doesn’t require a label if a separate but clear label indicator is already displayed adjacent to the text field.
 Add class name `mdc-text-field--no-label` and remove the label element from the structure.
@@ -136,7 +129,7 @@ Add class name `mdc-text-field--no-label` and remove the label element from the 
 #### Filled
 
 ```html
-<label class="mdc-text-field mdc-text-field--no-label">
+<label class="mdc-text-field mdc-text-field--filled mdc-text-field--no-label">
   <span class="mdc-text-field__ripple"></span>
   <input class="mdc-text-field__input" type="text" placeholder="Placeholder text" aria-label="Label">
   <span class="mdc-line-ripple"></span>
@@ -147,40 +140,55 @@ Add class name `mdc-text-field--no-label` and remove the label element from the 
 
 ```html
 <label class="mdc-text-field mdc-text-field--outlined mdc-text-field--no-label">
-  <input class="mdc-text-field__input" type="text" aria-label="Label">
   <span class="mdc-notched-outline">
     <span class="mdc-notched-outline__leading"></span>
     <span class="mdc-notched-outline__trailing"></span>
   </span>
+  <input class="mdc-text-field__input" type="text" aria-label="Label">
 </label>
 ```
 
 #### Textarea
 
 ```html
-<label class="mdc-text-field mdc-text-field--textarea mdc-text-field--no-label">
-  <textarea class="mdc-text-field__input" rows="8" cols="40" aria-label="Label"></textarea>
+<label class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--no-label">
   <span class="mdc-notched-outline">
     <span class="mdc-notched-outline__leading"></span>
     <span class="mdc-notched-outline__trailing"></span>
   </span>
+  <span class="mdc-text-field__resizer">
+    <textarea class="mdc-text-field__input" rows="8" cols="40" aria-label="Label"></textarea>
+  </span>
 </label>
 ```
 
-### Text Field with Helper Text
+### Disabled text field
+
+To disable the text field, add the `disabled` attribute to the `<input>` element and add the `mdc-text-field--disabled` class to the `mdc-text-field` element.
+
+```html
+<label class="mdc-text-field mdc-text-field--filled mdc-text-field--disabled">
+  <span class="mdc-text-field__ripple"></span>
+  <span class="mdc-floating-label" id="my-label-id">Disabled text field</span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" disabled>
+  <span class="mdc-line-ripple"></span>
+</label>
+```
+
+### Text field with helper text
 
 The helper text provides supplemental information and/or validation messages to users. It appears on input field focus
 and disappears on input field blur by default, or it can be persistent. Helper text should be rendered inside `.mdc-text-field-helper-line` element
 which is immediate sibling of `.mdc-text-field`. See [here](helper-text/) for more information on using helper text.
 
 ```html
-<label class="mdc-text-field">
+<label class="mdc-text-field mdc-text-field--filled">
   <span class="mdc-text-field__ripple"></span>
+  <span class="mdc-floating-label" id="my-label-id">My Label</span>
   <input class="mdc-text-field__input" type="text"
          aria-labelledby="my-label-id"
          aria-controls="my-helper-id"
          aria-describedby="my-helper-id">
-  <span class="mdc-floating-label" id="my-label-id">My Label</span>
   <span class="mdc-line-ripple"></span>
 </label>
 <div class="mdc-text-field-helper-line">
@@ -188,17 +196,17 @@ which is immediate sibling of `.mdc-text-field`. See [here](helper-text/) for mo
 </div>
 ```
 
-### Text Field with Character Counter
+### Text field with character counter
 
 Character counter is used if there is a character limit. It displays the ratio of characters used and the total character limit.
 Character counter should be rendered inside `.mdc-text-field-helper-line` element which is immediate sibling of `.mdc-text-field`.
 See [here](character-counter/) for more information on using character counter.
 
 ```html
-<label class="mdc-text-field">
+<label class="mdc-text-field mdc-text-field--filled">
   <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" maxlength="10">
   <span class="mdc-floating-label" id="my-label-id">My Label</span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" maxlength="10">
   <span class="mdc-line-ripple"></span>
 </label>
 <div class="mdc-text-field-helper-line">
@@ -206,15 +214,14 @@ See [here](character-counter/) for more information on using character counter.
 </div>
 ```
 
-### Multi-line Text Field (Textarea) with Character Counter
+### Multi-line text field (textarea) with character counter
 
-The layout structure of character counter for multi-line text field (textarea) is slightly different since it is rendered
-inside of text field component.
+A character counter can be associated with a textarea by including it in the
+helper line. In this case, the counter will appear below the textarea, adjacent
+to any helper text.
 
 ```html
 <label class="mdc-text-field mdc-text-field--textarea">
-  <div class="mdc-text-field-character-counter">0 / 140</div>
-  <textarea class="mdc-text-field__input" aria-labelledby="my-label-id" rows="8" cols="40" maxlength="140"></textarea>
   <span class="mdc-notched-outline">
     <span class="mdc-notched-outline__leading"></span>
     <span class="mdc-notched-outline__notch">
@@ -222,27 +229,73 @@ inside of text field component.
     </span>
     <span class="mdc-notched-outline__trailing"></span>
   </span>
+  <span class="mdc-text-field__resizer">
+    <textarea class="mdc-text-field__input" aria-labelledby="my-label-id" rows="8"
+      cols="40" maxlength="140"></textarea>
+  </span>
+</label>
+<div class="mdc-text-field-helper-line">
+  <div class="mdc-text-field-character-counter">0 / 140</div>
+</div>
+```
+Alternatively, the character counter can be placed in the textarea's body by
+inserting the character counter below the textarea and adding the
+`mdc-text-field--with-internal-counter` modifier class to the text field.
+
+```html
+<label class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--with-internal-counter">
+  <span class="mdc-notched-outline">
+    <span class="mdc-notched-outline__leading"></span>
+    <span class="mdc-notched-outline__notch">
+      <span class="mdc-floating-label" id="my-label-id">Textarea Label</span>
+    </span>
+    <span class="mdc-notched-outline__trailing"></span>
+  </span>
+  <span class="mdc-text-field__resizer">
+    <textarea class="mdc-text-field__input" aria-labelledby="my-label-id" rows="8" cols="40" maxlength="140"></textarea>
+    <span class="mdc-text-field-character-counter">0 / 140</span>
+  </span>
 </label>
 ```
 
 Helper text and Character counter are optional subcomponents of text field that can co-exist independently.
 It is recommended that `.mdc-text-field` and `.mdc-text-field-helper-line` elements have same width for correct layout.
 
-### Text Field with Leading and Trailing Icons
+### Text field with prefix and suffix text
+
+Prefix and suffix text can add context to a text field, such as a currency symbol prefix or a unit of mass suffix.
+A prefix, suffix, or both can be added within the default or outlined variants of text fields.
+
+```html
+<label class="mdc-text-field mdc-text-field--filled">
+  <span class="mdc-text-field__ripple"></span>
+  <span class="mdc-floating-label" id="my-label-id">Currency Value</span>
+  <span class="mdc-text-field__affix mdc-text-field__affix--prefix">$</span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id">
+  <span class="mdc-text-field__affix mdc-text-field__affix--suffix">.00</span>
+  <span class="mdc-line-ripple"></span>
+</label>
+```
+
+**Note: Do not use `mdc-text-field--affix` within `mdc-text-field--textarea`.**
+
+### Text field with leading and trailing icons
 
 Leading and trailing icons can be added within the default or outlined variant of MDC Text Field as visual indicators as
 well as interaction targets. See [here](icon/) for more information on using icons.
 
-### HTML5 Validation
+## Other features
+
+### HTML5 validation
 
 `MDCTextFieldFoundation` provides validity styling by using the `:invalid` and `:required` attributes provided
 by HTML5's form validation API.
 
 ```html
-<label class="mdc-text-field">
+<label class="mdc-text-field mdc-text-field--filled">
   <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input" type="password" aria-labelledby="my-label-id" required minlength="8">
   <span class="mdc-floating-label" id="my-label-id">Password</span>
+  <input class="mdc-text-field__input" type="password" aria-labelledby="my-label-id" required minlength="8">
   <span class="mdc-line-ripple"></span>
 </label>
 ```
@@ -252,22 +305,23 @@ by HTML5's form validation API.
 ### Pre-filled
 
 When dealing with JS-driven text fields that already have values, you'll want to ensure that you
-render `mdc-floating-label` with the `mdc-floating-label--float-above` modifier class. This will
+render `mdc-text-field` with the `mdc-text-field--label-floating` modifier class, as well as
+`mdc-floating-label` with the `mdc-floating-label--float-above` modifier class. This will
 ensure that the label moves out of the way of the text field's value and prevents a Flash Of
 Un-styled Content (**FOUC**).
 
 ```html
-<label class="mdc-text-field">
+<label class="mdc-text-field mdc-text-field--filled mdc-text-field--label-floating">
   <span class="mdc-text-field__ripple"></span>
-  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" value="Pre-filled value">
   <span class="mdc-floating-label mdc-floating-label--float-above" id="my-label-id">
     Label in correct place
   </span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="my-label-id" value="Pre-filled value">
   <span class="mdc-line-ripple"></span>
 </label>
 ```
 
-## Baseline Alignment
+### Baseline alignment
 
 By default, text fields will be aligned with other elements relative to their
 baseline. The input text's baseline is used to determine where a text field
@@ -278,48 +332,49 @@ flexbox.
 ```html
 <div>
   <label class="mdc-text-field mdc-text-field--outlined">
+    <span class="mdc-notched-outline">
+      <span class="mdc-notched-outline__leading"></span>
+      <span class="mdc-notched-outline__trailing"></span>
+    </span>
     <input type="text" class="mdc-text-field__input" value="Baseline">
-    <span class="mdc-notched-outline__leading"></span>
-    <span class="mdc-notched-outline__trailing"></span>
   </label>
   <span>Text that is aligned with the text field's value</span>
 </div>
 
 <div style="display: flex; flex-direction: row; align-items: flex-end;">
   <label class="mdc-text-field mdc-text-field--outlined">
+    <span class="mdc-notched-outline">
+      <span class="mdc-notched-outline__leading"></span>
+      <span class="mdc-notched-outline__trailing"></span>
+    </span>
     <input type="text" class="mdc-text-field__input" value="Baseline">
-    <span class="mdc-notched-outline__leading"></span>
-    <span class="mdc-notched-outline__trailing"></span>
   </label>
   <span>Text that is aligned to the bottom of the text field's outline</span>
 </div>
 ```
 
-## Style Customization
+## API
 
-### CSS Classes
+### CSS classes
 
 CSS Class | Description
 --- | ---
 `mdc-text-field` | Mandatory.
+`mdc-text-field--filled` | Styles the text field as a filled text field.
 `mdc-text-field--outlined` | Styles the text field as an outlined text field.
-`mdc-text-field--fullwidth` | Styles the text field as a full width text field.
 `mdc-text-field--textarea` | Indicates the text field is a `<textarea>`.
 `mdc-text-field--disabled` | Styles the text field as a disabled text field.
-`mdc-text-field--dense` | Styles the text field as a dense text field.\*
 `mdc-text-field--with-leading-icon` | Styles the text field as a text field with a leading icon.
 `mdc-text-field--with-trailing-icon` | Styles the text field as a text field with a trailing icon.
 `mdc-text-field--focused` | Styles the text field as a text field in focus.
 `mdc-text-field--no-label` | Styles the text field that has no label.
 `mdc-text-field--end-aligned` | Styles the text field with an end-aligned input.
+`mdc-text-field--label-floating` | Styles the text field with a floating label and pre-filled or focused value.
+`mdc-text-field--ltr-text` | Styles the text field's text elements (input, prefix, and suffix) as LTR even when the direction is RTL. Useful for RTL languages that use LTR for fractional notations.
+`mdc-text-field--with-internal-counter` | Styles the text area as a text area with an internal character counter.
 `mdc-text-field-helper-line` | Styles the container of helper text and character counter elements.
 
-#### Deprecation Notice
-
-\*The `--dense` variant of the text field will be removed in an upcoming release.
-See [github issue](https://github.com/material-components/material-components-web/issues/4142) for details.
-
-### Sass Mixins
+### Sass mixins
 
 To customize the colors of any part of the text-field, use the following mixins. We recommend you apply
 these mixins within CSS selectors like `.foo-text-field:not(.mdc-text-field--focused)` to select your unfocused text fields,
@@ -328,7 +383,7 @@ apply these mixins with CSS selectors such as `.foo-text-field.mdc-text-field--i
 
 > _NOTE_: the `mdc-line-ripple-color` mixin should be applied from the not focused class `foo-text-field:not(.mdc-text-field--focused)`).
 
-#### Mixins for all Text Fields
+#### Mixins for all text fields
 
 Mixin | Description
 --- | ---
@@ -339,15 +394,20 @@ Mixin | Description
 `label-color($color)` | Customizes the text color of the label in an enabled text field.
 `disabled-label-color($color)` | Customizes the text color of the label in a disabled text field.
 `caret-color($color)` | Customizes the color of the cursor caret of the text field.
+`prefix-color($color)` | Customizes the color of the prefix text of an enabled text field.
+`disabled-prefix-color($color)` | Customizes the color of the prefix text of a disabled text field.
+`suffix-color($color)` | Customizes the color of the suffix text of an enabled text field.
+`disabled-suffix-color($color)` | Customizes the color of the suffix text of a disabled text field.
+`floating-label-float-transition($duration-ms, $timing-function)` | Customizes the duration and optional timing function for the floating label's "float" transition.
 
-#### Mixins for Filled Text Field and Textarea
+#### Mixins for filled text field and textarea
 
 Mixin | Description
 --- | ---
 `fill-color($color)` | Customizes the background color of the text field or textarea when enabled.
 `disabled-fill-color($color)` | Customizes the background color of the text field or textarea when disabled.
 
-#### Mixins for Filled Text Field Only
+#### Mixins for filled text field only
 
 Mixin | Description
 --- | ---
@@ -359,7 +419,7 @@ Mixin | Description
 `density($density-scale)` | Sets density scale for default text field variant. Supported density scale values `-4`, `-3`, `-2`, `-1`, `0`.
 `height($height)` | Sets height of default text field variant.
 
-#### Mixins for Outlined Text Field and Textarea
+#### Mixins for outlined text field and textarea
 
 Mixin | Description
 --- | ---
@@ -368,7 +428,7 @@ Mixin | Description
 `disabled-outline-color($color)` | Customizes the outline border color when the text field or textarea is disabled.
 `outline-color($color)` | Customizes the border color of the outlined text field or textarea.
 
-#### Mixins for Outlined Text Field Only
+#### Mixins for outlined text field only
 
 Mixin | Description
 --- | ---
@@ -378,13 +438,15 @@ Mixin | Description
 `outlined-with-leading-icon-density($density-scale)` | Sets density scale for outlined text field with leading icon. Supported density scale values `-4`, `-3`, `-2`, `-1`, `0`.
 `outlined-with-leading-icon-height($height)` | Sets height of outlined text field with leading icon variant.
 
-#### Mixins for Textarea Only
+#### Mixins for textarea only
 
 Mixin | Description
 --- | ---
 `textarea-shape-radius($radius, $rtl-reflexive)` | Sets rounded shape to text area variant with given radius size. Set `$rtl-reflexive` to true to flip radius values in RTL context, defaults to false.
+`outlined-textarea-density($density-scale)` | Sets density scale for outlined textarea. Supported density scale values `-4`, `-3`, `-2`, `-1`, `0`.
+`textarea-min-rows($rows)` | Sets the minimum number of rows for a textarea a textarea may be resized to.
 
-## `MDCTextField` Properties and Methods
+## `MDCTextField` properties and methods
 
 Property | Value Type | Description
 --- | --- | ---
@@ -398,6 +460,8 @@ Property | Value Type | Description
 `trailingIconAriaLabel` | `string` (write-only) | Proxies to the foundation's `setTrailingIconAriaLabel` method.
 `leadingIconContent` | `string` (write-only) | Proxies to the foundation's `setLeadingIconContent` method.
 `trailingIconContent` | `string` (write-only) | Proxies to the foundation's `setTrailingIconContent` method.
+`prefixText` | `string` | Gets or sets the text content of the prefix, if it exists.
+`suffixText` | `string` | Gets or sets the text content of the suffix, if it exists.
 
 In addition to the above, the following properties proxy to the `input` element's properties of the same name:
 
@@ -414,7 +478,7 @@ Method Signature | Description
 `focus() => void` | Focuses the `input` or `textarea` element.
 `layout() => void` | Adjusts the dimensions and positions for all sub-elements.
 
-## Usage Within Frameworks
+## Usage within frameworks
 
 If you are using a JavaScript framework, such as React or Angular, you can create a Text Field for your framework. Depending on your needs, you can use the _Simple Approach: Wrapping MDC Web Vanilla Components_, or the _Advanced Approach: Using Foundations and Adapters_. Please follow the instructions [here](../../docs/integrating-into-frameworks.md).
 
@@ -425,10 +489,10 @@ Method Signature | Description
 `addClass(className: string) => void` | Adds a class to the root element.
 `removeClass(className: string) => void` | Removes a class from the root element.
 `hasClass(className: string) => boolean` | Returns true if the root element contains the given class name.
-`registerTextFieldInteractionHandler(evtType: string, handler: EventListener) => void` | Registers an event handler on the root element for a given event.
-`deregisterTextFieldInteractionHandler(evtType: string, handler: EventListener) => void` | Deregisters an event handler on the root element for a given event.
-`registerInputInteractionHandler(evtType: string, handler: EventListener) => void` | Registers an event listener on the native input element for a given event.
-`deregisterInputInteractionHandler(evtType: string, handler: EventListener) => void` | Deregisters an event listener on the native input element for a given event.
+`registerTextFieldInteractionHandler(eventType: string, handler: EventListener) => void` | Registers an event handler on the root element for a given event.
+`deregisterTextFieldInteractionHandler(eventType: string, handler: EventListener) => void` | Deregisters an event handler on the root element for a given event.
+`registerInputInteractionHandler(eventType: string, handler: EventListener) => void` | Registers an event listener on the native input element for a given event.
+`deregisterInputInteractionHandler(eventType: string, handler: EventListener) => void` | Deregisters an event listener on the native input element for a given event.
 `registerValidationAttributeChangeHandler(handler: (attributeNames: string[]) => void) => MutationObserver` | Registers a validation attribute change listener on the input element. Handler accepts list of attribute changes.
 `deregisterValidationAttributeChangeHandler(!MutationObserver) => void` | Disconnects a validation attribute observer on the input element.
 `getNativeInput() => NativeInputType \| null` | Returns an object representing the native text input element, with a similar API shape. See [types.ts](types.ts).
@@ -468,7 +532,7 @@ Method Signature | Description
 `isValid() => boolean` | Returns the component's current validity state (either native or custom, depending on how `setUseNativeValidation()` was configured).
 `isDisabled() => boolean` | Returns whether or not the input is disabled.
 `setDisabled(disabled: boolean) => void` | Updates the input's disabled state.
-`handleTextFieldInteraction(evt: Event) => void` | Handles click and keydown events originating from inside the Text Field component.
+`handleTextFieldInteraction(event: Event) => void` | Handles click and keydown events originating from inside the Text Field component.
 `handleInput() => void` | Handles text input and textarea input event.
 `handleValidationAttributeChange(attributesList: !Array<string>) => void` | Handles validation attribute changes.
 `activateFocus() => void` | Activates the focus state of the Text Field. Normally called in response to the input focus event.
@@ -479,7 +543,9 @@ Method Signature | Description
 `setTrailingIconAriaLabel(label: string) => void` | Sets the aria label of the trailing icon.
 `setTrailingIconContent(content: string) => void` | Sets the text content of the trailing icon.
 `notchOutline(openNotch: boolean) => void` | Opens/closes the notched outline.
-`setTransformOrigin(evt: TouchEvent \| MouseEvent) => void` | Sets the line ripple's transform origin, so that the line ripple activate animation will animate out from the user's click location.
+`setTransformOrigin(event: TouchEvent \| MouseEvent) => void` | Sets the line ripple's transform origin, so that the line ripple activate animation will animate out from the user's click location.
 `autoCompleteFocus() => void` | Activates the Text Field's focus state in cases when the input value is changed programmatically (i.e., without user action).
+`setAutovalidate(shouldAutovalidate: boolean) => void` | Sets whether or not the textfield should validate its input when `value` changes.
+`getAutovalidate() => boolean` | Whether or not the textfield should validate its input when `value` changes. `true` by default.
 
 `MDCTextFieldFoundation` supports multiple optional sub-elements: helper text and icon. The foundations of these sub-elements must be passed in as constructor arguments to `MDCTextFieldFoundation`.

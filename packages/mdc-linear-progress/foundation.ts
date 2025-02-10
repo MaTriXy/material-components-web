@@ -24,132 +24,211 @@
 import {getCorrectPropertyName} from '@material/animation/util';
 import {MDCFoundation} from '@material/base/foundation';
 import {MDCProgressIndicatorFoundation} from '@material/progress-indicator/foundation';
+
 import {MDCLinearProgressAdapter} from './adapter';
-import {cssClasses, strings} from './constants';
+import {animationDimensionPercentages as percents, cssClasses, strings} from './constants';
+import {MDCResizeObserver} from './types';
 
 export class MDCLinearProgressFoundation extends
     MDCFoundation<MDCLinearProgressAdapter> implements
         MDCProgressIndicatorFoundation {
-  static get cssClasses() {
+  static override get cssClasses() {
     return cssClasses;
   }
 
-  static get strings() {
+  static override get strings() {
     return strings;
   }
 
-  static get defaultAdapter(): MDCLinearProgressAdapter {
+  static override get defaultAdapter(): MDCLinearProgressAdapter {
     return {
       addClass: () => undefined,
+      attachResizeObserver: () => null,
       forceLayout: () => undefined,
+      getWidth: () => 0,
+      hasClass: () => false,
       setBufferBarStyle: () => null,
       setPrimaryBarStyle: () => null,
-      hasClass: () => false,
+      setStyle: () => undefined,
       removeAttribute: () => undefined,
       removeClass: () => undefined,
       setAttribute: () => undefined,
     };
   }
 
-  private isDeterminate_!: boolean;
-  private isReversed_!: boolean;
-  private progress_!: number;
-  private buffer_!: number;
+  private determinate!: boolean;
+  private progress!: number;
+  private buffer!: number;
+  private observer: MDCResizeObserver|null = null;
 
   constructor(adapter?: Partial<MDCLinearProgressAdapter>) {
     super({...MDCLinearProgressFoundation.defaultAdapter, ...adapter});
   }
 
-  init() {
-    this.isDeterminate_ = !this.adapter_.hasClass(cssClasses.INDETERMINATE_CLASS);
-    this.isReversed_ = this.adapter_.hasClass(cssClasses.REVERSED_CLASS);
-    this.progress_ = 0;
-    this.buffer_ = 1;
+  override init() {
+    this.determinate = !this.adapter.hasClass(cssClasses.INDETERMINATE_CLASS);
+    this.adapter.addClass(cssClasses.ANIMATION_READY_CLASS);
+    this.progress = 0;
+    this.buffer = 1;
+
+    this.observer = this.adapter.attachResizeObserver((entries) => {
+      if (this.determinate) {
+        return;
+      }
+
+      for (const entry of entries) {
+        if (entry.contentRect) {
+          this.calculateAndSetDimensions(entry.contentRect.width);
+        }
+      }
+    });
+
+    if (!this.determinate && this.observer) {
+      this.calculateAndSetDimensions(this.adapter.getWidth());
+    }
   }
 
   setDeterminate(isDeterminate: boolean) {
-    this.isDeterminate_ = isDeterminate;
+    this.determinate = isDeterminate;
 
-    if (this.isDeterminate_) {
-      this.adapter_.removeClass(cssClasses.INDETERMINATE_CLASS);
-      this.adapter_.setAttribute(strings.ARIA_VALUENOW, this.progress_.toString());
-      this.setPrimaryBarProgress_(this.progress_);
-      this.setBufferBarProgress_(this.buffer_);
+    if (this.determinate) {
+      this.adapter.removeClass(cssClasses.INDETERMINATE_CLASS);
+      this.adapter.setAttribute(
+          strings.ARIA_VALUENOW, this.progress.toString());
+      this.adapter.setAttribute(strings.ARIA_VALUEMAX, '1');
+      this.adapter.setAttribute(strings.ARIA_VALUEMIN, '0');
+      this.setPrimaryBarProgress(this.progress);
+      this.setBufferBarProgress(this.buffer);
 
       return;
     }
 
-    if (this.isReversed_) {
-      // Adding/removing REVERSED_CLASS starts a translate animation, while
-      // adding INDETERMINATE_CLASS starts a scale animation. Here, we reset
-      // the translate animation in order to keep it in sync with the new
-      // scale animation that will start from adding INDETERMINATE_CLASS
-      // below.
-      this.adapter_.removeClass(cssClasses.REVERSED_CLASS);
-      this.adapter_.forceLayout();
-      this.adapter_.addClass(cssClasses.REVERSED_CLASS);
+    if (this.observer) {
+      this.calculateAndSetDimensions(this.adapter.getWidth());
     }
 
-    this.adapter_.addClass(cssClasses.INDETERMINATE_CLASS);
-    this.adapter_.removeAttribute(strings.ARIA_VALUENOW);
-    this.setPrimaryBarProgress_(1);
-    this.setBufferBarProgress_(1);
+    this.adapter.addClass(cssClasses.INDETERMINATE_CLASS);
+    this.adapter.removeAttribute(strings.ARIA_VALUENOW);
+    this.adapter.removeAttribute(strings.ARIA_VALUEMAX);
+    this.adapter.removeAttribute(strings.ARIA_VALUEMIN);
+    this.setPrimaryBarProgress(1);
+    this.setBufferBarProgress(1);
+  }
+
+  isDeterminate() {
+    return this.determinate;
   }
 
   setProgress(value: number) {
-    this.progress_ = value;
-    if (this.isDeterminate_) {
-      this.setPrimaryBarProgress_(value);
-      this.adapter_.setAttribute(strings.ARIA_VALUENOW, value.toString());
+    this.progress = value;
+    if (this.determinate) {
+      this.setPrimaryBarProgress(value);
+      this.adapter.setAttribute(strings.ARIA_VALUENOW, value.toString());
     }
+  }
+
+  getProgress() {
+    return this.progress;
   }
 
   setBuffer(value: number) {
-    this.buffer_ = value;
-    if (this.isDeterminate_) {
-      this.setBufferBarProgress_(value);
+    this.buffer = value;
+    if (this.determinate) {
+      this.setBufferBarProgress(value);
     }
   }
 
-  setReverse(isReversed: boolean) {
-    this.isReversed_ = isReversed;
-
-    if (!this.isDeterminate_) {
-      // Adding INDETERMINATE_CLASS starts a scale animation, while
-      // adding/removing REVERSED_CLASS starts a translate animation. Here, we
-      // reset the scale animation in order to keep it in sync with the new
-      // translate animation that will start from adding/removing REVERSED_CLASS
-      // below.
-      this.adapter_.removeClass(cssClasses.INDETERMINATE_CLASS);
-      this.adapter_.forceLayout();
-      this.adapter_.addClass(cssClasses.INDETERMINATE_CLASS);
-    }
-
-    if (this.isReversed_) {
-      this.adapter_.addClass(cssClasses.REVERSED_CLASS);
-      return;
-    }
-
-    this.adapter_.removeClass(cssClasses.REVERSED_CLASS);
+  getBuffer() {
+    return this.buffer;
   }
 
   open() {
-    this.adapter_.removeClass(cssClasses.CLOSED_CLASS);
+    this.adapter.removeClass(cssClasses.CLOSED_CLASS);
+    this.adapter.removeClass(cssClasses.CLOSED_ANIMATION_OFF_CLASS);
+    this.adapter.removeAttribute(strings.ARIA_HIDDEN);
   }
 
   close() {
-    this.adapter_.addClass(cssClasses.CLOSED_CLASS);
+    this.adapter.addClass(cssClasses.CLOSED_CLASS);
+    this.adapter.setAttribute(strings.ARIA_HIDDEN, 'true');
   }
 
-  private setPrimaryBarProgress_(progressValue: number) {
+  isClosed() {
+    return this.adapter.hasClass(cssClasses.CLOSED_CLASS);
+  }
+
+  /**
+   * Handles the transitionend event emitted after `close()` is called and the
+   * opacity fades out. This is so that animations are removed only after the
+   * progress indicator is completely hidden.
+   */
+  handleTransitionEnd() {
+    if (this.adapter.hasClass(cssClasses.CLOSED_CLASS)) {
+      this.adapter.addClass(cssClasses.CLOSED_ANIMATION_OFF_CLASS);
+    }
+  }
+
+  override destroy() {
+    super.destroy();
+
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
+
+  restartAnimation() {
+    this.adapter.removeClass(cssClasses.ANIMATION_READY_CLASS);
+    this.adapter.forceLayout();
+    this.adapter.addClass(cssClasses.ANIMATION_READY_CLASS);
+  }
+
+  private setPrimaryBarProgress(progressValue: number) {
     const value = `scaleX(${progressValue})`;
-    this.adapter_.setPrimaryBarStyle(
-        getCorrectPropertyName(window, 'transform'), value);
+
+    // Accessing `window` without a `typeof` check will throw on Node
+    // environments.
+    const transformProp = typeof window !== 'undefined' ?
+        getCorrectPropertyName(window, 'transform') :
+        'transform';
+    this.adapter.setPrimaryBarStyle(transformProp, value);
   }
 
-  private setBufferBarProgress_(progressValue: number) {
+  private setBufferBarProgress(progressValue: number) {
     const value = `${progressValue * 100}%`;
-    this.adapter_.setBufferBarStyle(strings.FLEX_BASIS, value);
+    this.adapter.setBufferBarStyle(strings.FLEX_BASIS, value);
+  }
+
+  private calculateAndSetDimensions(width: number) {
+    const primaryHalf = width * percents.PRIMARY_HALF;
+    const primaryFull = width * percents.PRIMARY_FULL;
+    const secondaryQuarter = width * percents.SECONDARY_QUARTER;
+    const secondaryHalf = width * percents.SECONDARY_HALF;
+    const secondaryFull = width * percents.SECONDARY_FULL;
+
+    this.adapter.setStyle(
+        '--mdc-linear-progress-primary-half', `${primaryHalf}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-primary-half-neg', `${- primaryHalf}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-primary-full', `${primaryFull}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-primary-full-neg', `${- primaryFull}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-quarter', `${secondaryQuarter}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-quarter-neg',
+        `${- secondaryQuarter}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-half', `${secondaryHalf}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-half-neg', `${- secondaryHalf}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-full', `${secondaryFull}px`);
+    this.adapter.setStyle(
+        '--mdc-linear-progress-secondary-full-neg', `${- secondaryFull}px`);
+
+    // need to restart animation for custom props to apply to keyframes
+    this.restartAnimation();
   }
 }
 

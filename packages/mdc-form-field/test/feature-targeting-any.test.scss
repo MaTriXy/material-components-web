@@ -1,11 +1,16 @@
-@use "../mixins" as form-field;
-@use "@material/feature-targeting/functions" as feature;
+@use '../form-field';
+@use '../form-field-theme';
+@use '@material/feature-targeting/feature-targeting';
 
 @mixin test($query) {
   .test {
-    @include form-field.core-styles($query: $query);
+    @include form-field.static-styles($query: $query);
+    @include form-field-theme.theme-styles(
+      form-field-theme.$light-theme,
+      $query
+    );
   }
 }
 
 // This shouldn't output any CSS.
-@include test(feature.any());
+@include test(feature-targeting.any());

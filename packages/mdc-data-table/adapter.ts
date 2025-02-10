@@ -21,6 +21,10 @@
  * THE SOFTWARE.
  */
 
+
+import {SortValue} from './constants';
+import {MDCDataTableRowSelectionChangedEventDetail, ProgressIndicatorStyles, RowClickEventData, SortActionEventDetail} from './types';
+
 /**
  * Defines the shape of the adapter expected by the foundation.
  * Implement this adapter for your framework of choice to delegate updates to
@@ -28,10 +32,21 @@
  * for more details.
  * https://github.com/material-components/material-components-web/blob/master/docs/code/architecture.md
  */
-
-import {MDCDataTableRowSelectionChangedEventDetail, SortActionEventDetail} from './types';
-
 export interface MDCDataTableAdapter {
+  /**
+   * Adds CSS class name to root element.
+   *
+   * @param className CSS class name to add to root element.
+   */
+  addClass(className: string): void;
+
+  /**
+   * Removes CSS class name from root element.
+   *
+   * @param className CSS class name to add to root element.
+   */
+  removeClass(className: string): void;
+
   /**
    * Adds a class name to row element at given row index excluding header row.
    *
@@ -48,19 +63,21 @@ export interface MDCDataTableAdapter {
   /**
    * @return Array of row elements excluding header row.
    */
-  getRowElements(): Element[];
+  getRowElements(): HTMLElement[];
 
   /**
-   * Returns row id of row element at given row index based on `data-row-id` attribute on row element `tr`.
+   * Returns row id of row element at given row index based on `data-row-id`
+   * attribute on row element `tr`.
    *
    * @param rowIndex Index of row element.
-   * @return Row id of row element, returns `null` in absence of `data-row-id` attribute on row element.
+   * @return Row id of row element, returns `null` in absence of `data-row-id`
+   *     attribute on row element.
    */
-  getRowIdAtIndex(rowIndex: number): string | null;
+  getRowIdAtIndex(rowIndex: number): string|null;
 
   /**
-   * Returns index of row element that contains give child element. Returns -1 if element is not child of any row
-   * element.
+   * Returns index of row element that contains give child element. Returns -1
+   * if element is not child of any row element.
    *
    * @param el Child element of row element.
    * @return Index of row element.
@@ -93,7 +110,8 @@ export interface MDCDataTableAdapter {
    *
    * @param data Event detail data for row selection changed event.
    */
-  notifyRowSelectionChanged(data: MDCDataTableRowSelectionChangedEventDetail): void;
+  notifyRowSelectionChanged(data: MDCDataTableRowSelectionChangedEventDetail):
+      void;
 
   /**
    * Notifies when header row is checked.
@@ -106,17 +124,24 @@ export interface MDCDataTableAdapter {
   notifyUnselectedAll(): void;
 
   /**
-   * Initializes header row checkbox. Destroys previous header row checkbox instance if any.
-   * @return Can return Promise only if registering checkbox is asynchronous.
+   * Notifies when data row is clicked.
    */
-  registerHeaderRowCheckbox(): Promise<void> | void;
+  notifyRowClick(detail: RowClickEventData): void;
 
   /**
-   * Initializes all row checkboxes. Destroys previous row checkbox instances if any. This is usually called when row
-   * checkboxes are added or removed from table.
+   * Initializes header row checkbox. Destroys previous header row checkbox
+   * instance if any.
    * @return Can return Promise only if registering checkbox is asynchronous.
    */
-  registerRowCheckboxes(): Promise<void> | void;
+  registerHeaderRowCheckbox(): Promise<void>|void;
+
+  /**
+   * Initializes all row checkboxes. Destroys previous row checkbox instances if
+   * any. This is usually called when row checkboxes are added or removed from
+   * table.
+   * @return Can return Promise only if registering checkbox is asynchronous.
+   */
+  registerRowCheckboxes(): Promise<void>|void;
 
   /**
    * Removes class name from row element at give row index.
@@ -165,7 +190,7 @@ export interface MDCDataTableAdapter {
   /**
    * @return Array of header cell elements.
    */
-  getHeaderCellElements(): Element[];
+  getHeaderCellElements(): HTMLElement[];
 
   /**
    * @return Attribute value for given header cell index.
@@ -194,4 +219,32 @@ export interface MDCDataTableAdapter {
    * Notifies when column is sorted.
    */
   notifySortAction(data: SortActionEventDetail): void;
+
+  /**
+   * @return Returns computed styles height of table container element.
+   */
+  getTableContainerHeight(): number;
+
+  /**
+   * @return Returns computed styles height of table's header element.
+   */
+  getTableHeaderHeight(): number;
+
+  /**
+   * Sets progress indicator CSS styles to position it on top of table body.
+   */
+  setProgressIndicatorStyles(styles: ProgressIndicatorStyles): void;
+
+  /**
+   * Sets appropriate sort status label by header cell index. Skips setting sort
+   * status label if header cell is not sortable.
+   *
+   * Example status label to set for sortValue:
+   *
+   *   - `SortValue.ASCENDING`: 'Sorted in ascending order'
+   *   - `SortValue.DESCENDING`: 'Sorted in descending order'
+   *   - `SortValue.NONE`: '' (Empty string)
+   */
+  setSortStatusLabelByHeaderCellIndex(
+      columnIndex: number, sortValue: SortValue): void;
 }

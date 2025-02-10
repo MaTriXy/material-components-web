@@ -22,15 +22,17 @@
  */
 
 import {supportsCssVariables} from '../../mdc-ripple/util';
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 import {createMockFoundation} from '../../../testing/helpers/foundation';
 import {setUpMdcTestEnvironment} from '../../../testing/helpers/setup';
-import {strings} from '../constants';
+import {numbers, strings} from '../constants';
 import {MDCDialog, MDCDialogFoundation, util} from '../index';
 
-function getFixture() {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+const DEFAULT_CONTENT = html`Let Google help apps determine location.`;
+
+function getFixture(content: ReturnType<typeof html> = DEFAULT_CONTENT) {
+  return createFixture(html`
     <div>
       <button class="open-dialog-button">click</button>
       <div id="test-dialog"
@@ -44,41 +46,39 @@ function getFixture() {
               Use Google's location service?
             </h2>
             <section class="mdc-dialog__content">
-              Let Google help apps determine location.
+              ${content}
             </section>
-            <footer class="mdc-dialog__actions">
+            <div class="mdc-dialog__actions">
               <button class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel" type="button">
                 <span class="mdc-button__label">Cancel</span>
               </button>
               <button class="mdc-button mdc-dialog__button" data-mdc-dialog-action="no" type="button">
                 <span class="mdc-button__label">No</span>
               </button>
-              <button class="mdc-button mdc-dialog__button" data-mdc-dialog-action="yes" type="button">
+              <button class="mdc-button mdc-dialog__button" data-mdc-dialog-action="yes" type="button" ${
+      strings.INITIAL_FOCUS_ATTRIBUTE}>
                 <span class="mdc-button__label">Yes</span>
               </button>
-            </footer>
+            </div>
           </div>
         </div>
         <div class="mdc-dialog__scrim"></div>
       </div>
-    </div>`;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+    </div>`);
 }
 
 function setupTest(fixture = getFixture()) {
-  const root = fixture.querySelector('.mdc-dialog') as HTMLElement;
+  const root = fixture.querySelector<HTMLElement>('.mdc-dialog')!;
   const component = new MDCDialog(root);
-  const title = fixture.querySelector('.mdc-dialog__title') as HTMLElement;
-  const content = fixture.querySelector('.mdc-dialog__content') as HTMLElement;
-  const actions = fixture.querySelector('.mdc-dialog__actions') as HTMLElement;
+  const title = fixture.querySelector<HTMLElement>('.mdc-dialog__title')!;
+  const content = fixture.querySelector<HTMLElement>('.mdc-dialog__content')!;
+  const actions = fixture.querySelector<HTMLElement>('.mdc-dialog__actions')!;
   const yesButton =
-      fixture.querySelector('[data-mdc-dialog-action="yes"]') as HTMLElement;
+      fixture.querySelector<HTMLElement>('[data-mdc-dialog-action="yes"]')!;
   const noButton =
-      fixture.querySelector('[data-mdc-dialog-action="no"]') as HTMLElement;
+      fixture.querySelector<HTMLElement>('[data-mdc-dialog-action="no"]')!;
   const cancelButton =
-      fixture.querySelector('[data-mdc-dialog-action="cancel"]') as HTMLElement;
+      fixture.querySelector<HTMLElement>('[data-mdc-dialog-action="cancel"]')!;
   return {
     root,
     component,
@@ -108,18 +108,18 @@ describe('MDCDialog', () => {
 
   it('attachTo returns a component instance', () => {
     expect(MDCDialog.attachTo(
-               getFixture().querySelector('.mdc-dialog') as HTMLElement))
+               getFixture().querySelector<HTMLElement>('.mdc-dialog')!))
         .toEqual(jasmine.any(MDCDialog));
   });
 
   it('attachTo throws an error when container element is missing', () => {
     const fixture = getFixture();
     const container =
-        fixture.querySelector('.mdc-dialog__container') as HTMLElement;
+        fixture.querySelector<HTMLElement>('.mdc-dialog__container')!;
     container.parentElement!.removeChild(container);
     expect(
         () => MDCDialog.attachTo(
-            fixture.querySelector('.mdc-dialog') as HTMLElement))
+            fixture.querySelector<HTMLElement>('.mdc-dialog')!))
         .toThrow();
   });
 
@@ -174,33 +174,7 @@ describe('MDCDialog', () => {
        expect(mockFoundation.handleDocumentKeydown).toHaveBeenCalledTimes(1);
      });
 
-  it(`${strings.OPENING_EVENT} registers window resize handler and ${
-         strings.CLOSING_EVENT} deregisters it`,
-     () => {
-       const {root, mockFoundation} = setupTestWithMocks();
-       emitEvent(root, strings.OPENING_EVENT);
-       emitEvent(window, 'resize');
-       expect(mockFoundation.layout).toHaveBeenCalledTimes(1);
-
-       emitEvent(root, strings.CLOSING_EVENT);
-       emitEvent(window, 'resize');
-       expect(mockFoundation.layout).toHaveBeenCalledTimes(1);
-     });
-
-  it(`${strings.OPENING_EVENT} registers window orientationchange handler and ${
-         strings.CLOSING_EVENT} deregisters it`,
-     () => {
-       const {root, mockFoundation} = setupTestWithMocks();
-       emitEvent(root, strings.OPENING_EVENT);
-       emitEvent(window, 'orientationchange');
-       expect(mockFoundation.layout).toHaveBeenCalledTimes(1);
-
-       emitEvent(root, strings.CLOSING_EVENT);
-       emitEvent(window, 'orientationchange');
-       expect(mockFoundation.layout).toHaveBeenCalledTimes(1);
-     });
-
-  it('#initialize attaches ripple elements to all footer buttons', function() {
+  it('#initialize attaches ripple elements to all footer buttons', () => {
     if (!supportsCssVariables(window, true)) {
       return;
     }
@@ -208,12 +182,12 @@ describe('MDCDialog', () => {
     const {yesButton, noButton, cancelButton} = setupTest();
     jasmine.clock().tick(1);
 
-    expect(yesButton.classList.contains('mdc-ripple-upgraded')).toBe(true);
-    expect(noButton.classList.contains('mdc-ripple-upgraded')).toBe(true);
-    expect(cancelButton.classList.contains('mdc-ripple-upgraded')).toBe(true);
+    expect(yesButton).toHaveClass('mdc-ripple-upgraded');
+    expect(noButton).toHaveClass('mdc-ripple-upgraded');
+    expect(cancelButton).toHaveClass('mdc-ripple-upgraded');
   });
 
-  it('#destroy cleans up all ripples on footer buttons', function() {
+  it('#destroy cleans up all ripples on footer buttons', () => {
     if (!supportsCssVariables(window, true)) {
       return;
     }
@@ -224,9 +198,9 @@ describe('MDCDialog', () => {
     component.destroy();
     jasmine.clock().tick(1);
 
-    expect(yesButton.classList.contains('mdc-ripple-upgraded')).toBe(false);
-    expect(noButton.classList.contains('mdc-ripple-upgraded')).toBe(false);
-    expect(cancelButton.classList.contains('mdc-ripple-upgraded')).toBe(false);
+    expect(yesButton).not.toHaveClass('mdc-ripple-upgraded');
+    expect(noButton).not.toHaveClass('mdc-ripple-upgraded');
+    expect(cancelButton).not.toHaveClass('mdc-ripple-upgraded');
   });
 
   it('#open forwards to MDCDialogFoundation#open', () => {
@@ -304,12 +278,13 @@ describe('MDCDialog', () => {
      });
 
   it('autoStackButtons adds scrollable class', () => {
-    const fixture = getFixture();
-    const root = fixture.querySelector('.mdc-dialog') as HTMLElement;
-    const content = root.querySelector('.mdc-dialog__content') as HTMLElement;
-
     // Simulate a scrollable content area
-    content.innerHTML = new Array(100).join(`<p>${content.textContent}</p>`);
+    const contentChildren =
+        new Array(100).join(html`<p>${DEFAULT_CONTENT}</p>`);
+    const fixture = getFixture(contentChildren);
+    const root = fixture.querySelector<HTMLElement>('.mdc-dialog')!;
+    const content = root.querySelector<HTMLElement>('.mdc-dialog__content')!;
+
     content.style.height = '50px';
     content.style.overflow = 'auto';
 
@@ -322,7 +297,7 @@ describe('MDCDialog', () => {
       jasmine.clock().tick(1);
       jasmine.clock().tick(1);
 
-      expect(root.classList.contains('mdc-dialog--scrollable')).toBe(true);
+      expect(root).toHaveClass('mdc-dialog--scrollable');
     } finally {
       document.body.removeChild(fixture);
     }
@@ -330,46 +305,44 @@ describe('MDCDialog', () => {
 
   it('adapter#addClass adds a class to the root element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('adapter#removeClass removes a class from the root element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('adapter#hasClass returns whether a class exists on the root element',
      () => {
        const {root, component} = setupTest();
        root.classList.add('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
+       expect((component.getDefaultFoundation() as any).adapter.hasClass('foo'))
            .toBe(true);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.hasClass('does-not-exist'))
+                  .adapter.hasClass('does-not-exist'))
            .toBe(false);
      });
 
   it('adapter#addBodyClass adds a class to the body', () => {
     const {component} = setupTest();
     (component.getDefaultFoundation() as any)
-        .adapter_.addBodyClass('mdc-dialog--scroll-lock');
-    expect((document.querySelector('body') as HTMLElement)
-               .classList.contains('mdc-dialog--scroll-lock'))
-        .toBe(true);
+        .adapter.addBodyClass('mdc-dialog--scroll-lock');
+    expect((document.querySelector<HTMLElement>('body')!))
+        .toHaveClass('mdc-dialog--scroll-lock');
   });
 
   it('adapter#removeBodyClass removes a class from the body', () => {
     const {component} = setupTest();
-    const body = document.querySelector('body') as HTMLElement;
+    const body = document.querySelector<HTMLElement>('body')!;
 
     body.classList.add('mdc-dialog--scroll-lock');
     (component.getDefaultFoundation() as any)
-        .adapter_.removeBodyClass('mdc-dialog--scroll-lock');
-    expect(body.classList.contains('mdc-dialog--scroll-lock')).toBe(false);
+        .adapter.removeBodyClass('mdc-dialog--scroll-lock');
+    expect(body).not.toHaveClass('mdc-dialog--scroll-lock');
   });
 
   it('adapter#eventTargetMatches returns whether or not the target matches the selector',
@@ -377,7 +350,7 @@ describe('MDCDialog', () => {
        const {component} = setupTest();
        const target = document.createElement('div');
        target.classList.add('existent-class');
-       const {adapter_: adapter} = component.getDefaultFoundation() as any;
+       const {adapter: adapter} = component.getDefaultFoundation() as any;
 
        expect(adapter.eventTargetMatches(target, '.existent-class')).toBe(true);
        expect(adapter.eventTargetMatches(target, '.non-existent-class'))
@@ -391,7 +364,7 @@ describe('MDCDialog', () => {
     const handler = jasmine.createSpy('notifyOpeningHandler');
 
     component.listen(strings.OPENING_EVENT, handler);
-    (component.getDefaultFoundation() as any).adapter_.notifyOpening();
+    (component.getDefaultFoundation() as any).adapter.notifyOpening();
     component.unlisten(strings.OPENING_EVENT, handler);
 
     expect(handler).toHaveBeenCalledWith(jasmine.anything());
@@ -403,7 +376,7 @@ describe('MDCDialog', () => {
     const handler = jasmine.createSpy('notifyOpenedHandler');
 
     component.listen(strings.OPENED_EVENT, handler);
-    (component.getDefaultFoundation() as any).adapter_.notifyOpened();
+    (component.getDefaultFoundation() as any).adapter.notifyOpened();
     component.unlisten(strings.OPENED_EVENT, handler);
 
     expect(handler).toHaveBeenCalledWith(jasmine.anything());
@@ -418,7 +391,7 @@ describe('MDCDialog', () => {
        const handler = jasmine.createSpy('notifyClosingHandler');
 
        component.listen(strings.CLOSING_EVENT, handler);
-       (component.getDefaultFoundation() as any).adapter_.notifyClosing('');
+       (component.getDefaultFoundation() as any).adapter.notifyClosing('');
        component.unlisten(strings.CLOSING_EVENT, handler);
 
        expect(handler).toHaveBeenCalledWith(
@@ -432,7 +405,7 @@ describe('MDCDialog', () => {
     const handler = jasmine.createSpy('notifyClosingHandler');
 
     component.listen(strings.CLOSING_EVENT, handler);
-    (component.getDefaultFoundation() as any).adapter_.notifyClosing(action);
+    (component.getDefaultFoundation() as any).adapter.notifyClosing(action);
     component.unlisten(strings.CLOSING_EVENT, handler);
 
     expect(handler).toHaveBeenCalledWith(
@@ -447,7 +420,7 @@ describe('MDCDialog', () => {
        const handler = jasmine.createSpy('notifyClosedHandler');
 
        component.listen(strings.CLOSED_EVENT, handler);
-       (component.getDefaultFoundation() as any).adapter_.notifyClosed('');
+       (component.getDefaultFoundation() as any).adapter.notifyClosed('');
        component.unlisten(strings.CLOSED_EVENT, handler);
 
        expect(handler).toHaveBeenCalledWith(
@@ -461,7 +434,7 @@ describe('MDCDialog', () => {
     const handler = jasmine.createSpy('notifyClosedHandler');
 
     component.listen(strings.CLOSED_EVENT, handler);
-    (component.getDefaultFoundation() as any).adapter_.notifyClosed(action);
+    (component.getDefaultFoundation() as any).adapter.notifyClosed(action);
     component.unlisten(strings.CLOSED_EVENT, handler);
 
     expect(handler).toHaveBeenCalledWith(
@@ -472,7 +445,7 @@ describe('MDCDialog', () => {
      () => {
        const {component, mockFocusTrapInstance} = setupTestWithMocks();
        component.initialize();
-       (component.getDefaultFoundation() as any).adapter_.trapFocus();
+       (component.getDefaultFoundation() as any).adapter.trapFocus();
 
        expect(mockFocusTrapInstance.trapFocus).toHaveBeenCalled();
      });
@@ -481,7 +454,7 @@ describe('MDCDialog', () => {
      () => {
        const {component, mockFocusTrapInstance} = setupTestWithMocks();
        component.initialize();
-       (component.getDefaultFoundation() as any).adapter_.releaseFocus();
+       (component.getDefaultFoundation() as any).adapter.releaseFocus();
 
        expect(mockFocusTrapInstance.releaseFocus).toHaveBeenCalled();
      });
@@ -491,14 +464,14 @@ describe('MDCDialog', () => {
        const {component, content} = setupTest();
        content.parentElement!.removeChild(content);
        const isContentScrollable = (component.getDefaultFoundation() as any)
-                                       .adapter_.isContentScrollable();
+                                       .adapter.isContentScrollable();
        expect(isContentScrollable).toBe(false);
      });
 
   it('adapter#isContentScrollable returns result of util.isScrollable', () => {
     const {component, content} = setupTest();
-    expect((component.getDefaultFoundation() as any)
-               .adapter_.isContentScrollable())
+    expect(
+        (component.getDefaultFoundation() as any).adapter.isContentScrollable())
         .toBe(util.isScrollable(content));
   });
 
@@ -506,7 +479,7 @@ describe('MDCDialog', () => {
      () => {
        const {component, yesButton, noButton, cancelButton} = setupTest();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.areButtonsStacked())
+                  .adapter.areButtonsStacked())
            .toBe(util.areTopsMisaligned([yesButton, noButton, cancelButton]));
      });
 
@@ -514,7 +487,7 @@ describe('MDCDialog', () => {
      () => {
        const {component} = setupTest();
        const action = (component.getDefaultFoundation() as any)
-                          .adapter_.getActionFromEvent({});
+                          .adapter.getActionFromEvent({});
        expect(action).toEqual('');
      });
 
@@ -522,7 +495,7 @@ describe('MDCDialog', () => {
      () => {
        const {component, yesButton} = setupTest();
        const action = (component.getDefaultFoundation() as any)
-                          .adapter_.getActionFromEvent({target: yesButton});
+                          .adapter.getActionFromEvent({target: yesButton});
        expect(action).toEqual('yes');
      });
 
@@ -532,7 +505,7 @@ describe('MDCDialog', () => {
        const childEl = document.createElement('span');
        yesButton.appendChild(childEl);
        const action = (component.getDefaultFoundation() as any)
-                          .adapter_.getActionFromEvent({target: childEl});
+                          .adapter.getActionFromEvent({target: childEl});
        expect(action).toEqual('yes');
      });
 
@@ -540,7 +513,7 @@ describe('MDCDialog', () => {
      () => {
        const {component, title} = setupTest();
        const action = (component.getDefaultFoundation() as any)
-                          .adapter_.getActionFromEvent({target: title});
+                          .adapter.getActionFromEvent({target: title});
        expect(action).toBe(null);
      });
 
@@ -548,14 +521,14 @@ describe('MDCDialog', () => {
          strings.BUTTON_DEFAULT_ATTRIBUTE}`,
      () => {
        const fixture = getFixture();
-       const yesButton = fixture.querySelector(
-                             '[data-mdc-dialog-action="yes"]') as HTMLElement;
+       const yesButton = fixture.querySelector<HTMLElement>(
+           '[data-mdc-dialog-action="yes"]')!;
        yesButton.setAttribute(strings.BUTTON_DEFAULT_ATTRIBUTE, 'true');
 
        const {component} = setupTest(fixture);
        yesButton.click = jasmine.createSpy('click');
 
-       (component.getDefaultFoundation() as any).adapter_.clickDefaultButton();
+       (component.getDefaultFoundation() as any).adapter.clickDefaultButton();
        expect(yesButton.click).toHaveBeenCalled();
      });
 
@@ -568,7 +541,7 @@ describe('MDCDialog', () => {
 
        expect(
            () => (component.getDefaultFoundation() as any)
-                     .adapter_.clickDefaultButton)
+                     .adapter.clickDefaultButton)
            .not.toThrow();
        expect(yesButton.click).not.toHaveBeenCalled();
        expect(noButton.click).not.toHaveBeenCalled();
@@ -578,17 +551,52 @@ describe('MDCDialog', () => {
      () => {
        const {component, actions, yesButton, noButton, cancelButton} =
            setupTest();
-       (component.getDefaultFoundation() as any).adapter_.reverseButtons();
-       expect([
-         yesButton, noButton, cancelButton
-       ]).toEqual([].slice.call(actions.children));
+       (component.getDefaultFoundation() as any).adapter.reverseButtons();
+       expect(actions.children[0]).toEqual(yesButton);
+       expect(actions.children[1]).toEqual(noButton);
+       expect(actions.children[2]).toEqual(cancelButton);
      });
 
   it('#layout proxies to foundation', () => {
     const {component} = setupTest();
-    (component as any).foundation_.layout =
-        jasmine.createSpy('component.foundation_.layout');
+    (component as any).foundation.layout =
+        jasmine.createSpy('component.foundation.layout');
     component.layout();
-    expect((component as any).foundation_.layout).toHaveBeenCalled();
+    expect((component as any).foundation.layout).toHaveBeenCalled();
   });
+
+  it(`Button with ${
+         strings
+             .INITIAL_FOCUS_ATTRIBUTE} will be focused when the dialog is opened, with multiple initial focus buttons in DOM`,
+     () => {
+       const {root: root1, component: component1, yesButton: yesButton1} =
+           setupTest();
+       const {root: root2, component: component2, yesButton: yesButton2} =
+           setupTest();
+
+       expect(yesButton1.hasAttribute(strings.INITIAL_FOCUS_ATTRIBUTE))
+           .toBe(true);
+       expect(yesButton2.hasAttribute(strings.INITIAL_FOCUS_ATTRIBUTE))
+           .toBe(true);
+
+       try {
+         document.body.appendChild(root1);
+         document.body.appendChild(root2);
+
+         component1.open();
+         jasmine.clock().tick(numbers.DIALOG_ANIMATION_OPEN_TIME_MS + 10);
+         expect(document.activeElement).toEqual(yesButton1);
+         component1.close();
+         jasmine.clock().tick(numbers.DIALOG_ANIMATION_CLOSE_TIME_MS);
+
+         component2.open();
+         jasmine.clock().tick(numbers.DIALOG_ANIMATION_OPEN_TIME_MS + 10);
+         expect(document.activeElement).toEqual(yesButton2);
+         component2.close();
+         jasmine.clock().tick(numbers.DIALOG_ANIMATION_CLOSE_TIME_MS);
+       } finally {
+         document.body.removeChild(root1);
+         document.body.removeChild(root2);
+       }
+     });
 });

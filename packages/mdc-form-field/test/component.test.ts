@@ -22,19 +22,16 @@
  */
 
 import {MDCFormField} from '../../mdc-form-field/index';
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 
 function getFixture() {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  return createFixture(html`
     <div class="mdc-form-field">
       <input type="radio" id="radio" checked name="radio">
-      <label for="radio">Foo</label>
+      <label class="mdc-label" for="radio">Foo</label>
     </div>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+  `);
 }
 
 function setupTest() {
@@ -64,10 +61,10 @@ describe('MDCFormField', () => {
      () => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('eventHandler');
-       const label = root.querySelector('label') as HTMLElement;
+       const label = root.querySelector('label')!;
 
        (component.getDefaultFoundation() as any)
-           .adapter_.registerInteractionHandler('click', handler);
+           .adapter.registerInteractionHandler('click', handler);
        emitEvent(label, 'click');
 
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
@@ -77,11 +74,11 @@ describe('MDCFormField', () => {
      () => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('eventHandler');
-       const label = root.querySelector('label') as HTMLElement;
+       const label = root.querySelector('label')!;
        label.addEventListener('click', handler);
 
        (component.getDefaultFoundation() as any)
-           .adapter_.deregisterInteractionHandler('click', handler);
+           .adapter.deregisterInteractionHandler('click', handler);
        emitEvent(label, 'click');
 
        expect(handler).not.toHaveBeenCalledWith(jasmine.anything());
@@ -89,11 +86,11 @@ describe('MDCFormField', () => {
 
   it('adapter#activateInputRipple calls activate on the input ripple', () => {
     const {component} = setupTest();
-    const ripple = {activate: jasmine.createSpy('activate')} as any;
+    const ripple: any = {activate: jasmine.createSpy('activate')};
     const input = {ripple};
 
     component.input = input;
-    (component.getDefaultFoundation() as any).adapter_.activateInputRipple();
+    (component.getDefaultFoundation() as any).adapter.activateInputRipple();
 
     expect(ripple.activate).toHaveBeenCalled();
   });
@@ -103,7 +100,7 @@ describe('MDCFormField', () => {
 
     expect(
         () => (component.getDefaultFoundation() as any)
-                  .adapter_.activateInputRipple)
+                  .adapter.activateInputRipple)
         .not.toThrow();
   });
 
@@ -116,19 +113,19 @@ describe('MDCFormField', () => {
 
        expect(
            () => (component.getDefaultFoundation() as any)
-                     .adapter_.activateInputRipple)
+                     .adapter.activateInputRipple)
            .not.toThrow();
      });
 
   it('adapter#deactivateInputRipple calls deactivate on the input ripple',
      () => {
        const {component} = setupTest();
-       const ripple = {deactivate: jasmine.createSpy('deactivate')} as any;
+       const ripple: any = {deactivate: jasmine.createSpy('deactivate')};
        const input = {ripple};
 
        component.input = input;
        (component.getDefaultFoundation() as any)
-           .adapter_.deactivateInputRipple();
+           .adapter.deactivateInputRipple();
 
        expect(ripple.deactivate).toHaveBeenCalled();
      });
@@ -139,7 +136,7 @@ describe('MDCFormField', () => {
 
        expect(
            () => (component.getDefaultFoundation() as any)
-                     .adapter_.deactivateInputRipple)
+                     .adapter.deactivateInputRipple)
            .not.toThrow();
      });
 
@@ -152,7 +149,7 @@ describe('MDCFormField', () => {
 
        expect(
            () => (component.getDefaultFoundation() as any)
-                     .adapter_.deactivateInputRipple)
+                     .adapter.deactivateInputRipple)
            .not.toThrow();
      });
 });

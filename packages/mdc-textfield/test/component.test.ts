@@ -25,52 +25,63 @@ import {MDCFloatingLabel} from '../../mdc-floating-label/index';
 import {MDCLineRipple} from '../../mdc-line-ripple/index';
 import {MDCNotchedOutline} from '../../mdc-notched-outline/index';
 import {MDCRipple} from '../../mdc-ripple/index';
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 import {createMockFoundation} from '../../../testing/helpers/foundation';
 import {cssClasses as characterCounterCssClasses} from '../../mdc-textfield/character-counter/constants';
 import {cssClasses as helperTextCssClasses} from '../../mdc-textfield/helper-text/constants';
-import {MDCTextField, MDCTextFieldCharacterCounter, MDCTextFieldFoundation, MDCTextFieldHelperText, MDCTextFieldIcon,} from '../../mdc-textfield/index';
+import {MDCTextField, MDCTextFieldCharacterCounter, MDCTextFieldFoundation, MDCTextFieldHelperText, MDCTextFieldIcon} from '../../mdc-textfield/index';
 
-const {cssClasses} = MDCTextFieldFoundation;
+const {cssClasses, strings} = MDCTextFieldFoundation;
 
-const getFixture = () => {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
-    <label class="mdc-text-field mdc-text-field--with-leading-icon">
+function getFixture() {
+  return createFixture(html`
+    <label class="mdc-text-field mdc-text-field--filled mdc-text-field--with-leading-icon">
+      <span class="mdc-floating-label" id="my-label">My Label</span>
       <i class="material-icons mdc-text-field__icon mdc-text-field__icon--leading" tabindex="0" role="button">event</i>
       <input type="text" class="mdc-text-field__input" aria-labelledby="my-label">
-      <span class="mdc-floating-label" id="my-label">My Label</span>
       <span class="mdc-line-ripple"></span>
     </label>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
-};
+  `);
+}
 
-const getHelperLineWithHelperText = () => {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+function getHelperLineWithHelperText() {
+  return createFixture(html`
     <div class="${cssClasses.HELPER_LINE}">
       <div class="${helperTextCssClasses.ROOT}">helper text</div>
     </div>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
-};
+  `);
+}
 
-const getHelperLineWithCharacterCounter = () => {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+function getHelperLineWithCharacterCounter() {
+  return createFixture(html`
     <div class="${cssClasses.HELPER_LINE}">
       <div class="${characterCounterCssClasses.ROOT}">helper text</div>
     </div>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
-};
+  `);
+}
+
+function getFixtureWithPrefix() {
+  return createFixture(html`
+    <label class="mdc-text-field mdc-text-field--filled">
+      <span class="mdc-floating-label" id="my-label">My Label</span>
+      <span class="mdc-text-field__affix mdc-text-field__affix--prefix">$</span>
+      <input type="text" class="mdc-text-field__input" aria-labelledby="my-label">
+      <span class="mdc-line-ripple"></span>
+    </label>
+  `);
+}
+
+function getFixtureWithSuffix() {
+  return createFixture(html`
+    <label class="mdc-text-field mdc-text-field--filled">
+      <span class="mdc-floating-label" id="my-label">My Label</span>
+      <input type="text" class="mdc-text-field__input" aria-labelledby="my-label">
+      <span class="mdc-text-field__affix mdc-text-field__affix--suffix">/100</span>
+      <span class="mdc-line-ripple"></span>
+    </label>
+  `);
+}
 
 describe('MDCTextField', () => {
   it('attachTo returns an MDCTextField instance', () => {
@@ -81,7 +92,7 @@ describe('MDCTextField', () => {
   class FakeRipple {
     readonly destroy: jasmine.Spy;
 
-    constructor(readonly root_: HTMLElement) {
+    constructor(readonly root: HTMLElement) {
       this.destroy = jasmine.createSpy('.destroy');
     }
   }
@@ -128,9 +139,11 @@ describe('MDCTextField', () => {
   class FakeLabel {
     readonly destroy: jasmine.Spy;
     readonly shake: jasmine.Spy;
+    readonly setRequired: jasmine.Spy;
     constructor() {
       this.destroy = jasmine.createSpy('.destroy');
       this.shake = jasmine.createSpy('.shake');
+      this.setRequired = jasmine.createSpy('.setRequired');
     }
   }
 
@@ -146,7 +159,7 @@ describe('MDCTextField', () => {
        const root = getFixture();
        const component = new MDCTextField(
            root, undefined, (el: HTMLElement) => new FakeRipple(el));
-       expect(component.ripple!.root_).toEqual(root);
+       expect(component.root).toEqual(root);
      });
 
   it('#constructor does not instantiate a ripple when ${cssClasses.OUTLINED} class is present',
@@ -165,7 +178,7 @@ describe('MDCTextField', () => {
        expect(component.ripple).toEqual(null);
      });
 
-  it('#constructor when given a `mdc-text-field--box` element, initializes a default ripple when no ' +
+  it('#constructor when given a `mdc-text-field--filled` element, initializes a default ripple when no ' +
          'ripple factory given',
      () => {
        const root = getFixture();
@@ -177,7 +190,7 @@ describe('MDCTextField', () => {
      () => {
        const root = getFixture();
        const component = new MDCTextField(root);
-       expect(component['lineRipple_']).toEqual(jasmine.any(MDCLineRipple));
+       expect(component['lineRipple']).toEqual(jasmine.any(MDCLineRipple));
      });
 
   it('#constructor instantiates a helper text if present', () => {
@@ -186,7 +199,7 @@ describe('MDCTextField', () => {
     document.body.appendChild(root);
     document.body.appendChild(helperText);
     const component = new MDCTextField(root);
-    expect(component['helperText_'])
+    expect(component['helperText'])
         .toEqual(jasmine.any(MDCTextFieldHelperText));
     document.body.removeChild(root);
     document.body.removeChild(helperText);
@@ -199,7 +212,7 @@ describe('MDCTextField', () => {
     root.querySelector('input')!.maxLength = 12;
     document.body.appendChild(characterCounter);
     const component = new MDCTextField(root);
-    expect(component['characterCounter_'])
+    expect(component['characterCounter'])
         .toEqual(jasmine.any(MDCTextFieldCharacterCounter));
     document.body.removeChild(root);
     document.body.removeChild(characterCounter);
@@ -209,72 +222,61 @@ describe('MDCTextField', () => {
      () => {
        const root = getFixture();
        const component = new MDCTextField(root);
-       expect(component['leadingIcon_']).toEqual(jasmine.any(MDCTextFieldIcon));
-       expect(component['trailingIcon_']).toEqual(null);
+       expect(component['leadingIcon']).toEqual(jasmine.any(MDCTextFieldIcon));
+       expect(component['trailingIcon']).toEqual(null);
      });
 
-  it('#constructor instantiates an icon for both icon elements if present',
-     () => {
-       const root = getFixture();
-       root.classList.add('mdc-text-field--with-trailing-icon');
+  it('#constructor instantiates an icon for both icon elements if present', () => {
+    const root = getFixture();
+    root.classList.add('mdc-text-field--with-trailing-icon');
 
-       const wrapper = document.createElement('div');
-       wrapper.innerHTML =
-           `<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`;
-       const el = wrapper.firstElementChild as HTMLElement;
-       wrapper.removeChild(el);
-       root.appendChild(el);
-       const component = new MDCTextField(root);
-       expect(component['leadingIcon_']).toEqual(jasmine.any(MDCTextFieldIcon));
-       expect(component['trailingIcon_'])
-           .toEqual(jasmine.any(MDCTextFieldIcon));
-     });
+    const el = createFixture(
+        html`<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`);
+    root.appendChild(el);
+    const component = new MDCTextField(root);
+    expect(component['leadingIcon']).toEqual(jasmine.any(MDCTextFieldIcon));
+    expect(component['trailingIcon']).toEqual(jasmine.any(MDCTextFieldIcon));
+  });
 
   it('#constructor instantiates a trailing icon if the icon is present', () => {
     const root = getFixture();
-    const leadingIcon = root.querySelector('.mdc-text-field__icon');
+    const leadingIcon =
+        root.querySelector<HTMLElement>('.mdc-text-field__icon');
     root.removeChild(leadingIcon as HTMLElement);
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML =
-        `<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`;
-    const trailingIcon = wrapper.firstElementChild as HTMLElement;
+    const trailingIcon = createFixture(
+        html`<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`);
     root.appendChild(trailingIcon);
     root.classList.add('mdc-text-field--with-trailing-icon');
     root.classList.remove('mdc-text-field--with-leading-icon');
     const component = new MDCTextField(root);
-    expect(component['leadingIcon_']).toEqual(null);
-    expect(component['trailingIcon_']).toEqual(jasmine.any(MDCTextFieldIcon));
+    expect(component['leadingIcon']).toEqual(null);
+    expect(component['trailingIcon']).toEqual(jasmine.any(MDCTextFieldIcon));
   });
 
   it('#constructor instantiates a label on the `.mdc-floating-label` element if present',
      () => {
        const root = getFixture();
        const component = new MDCTextField(root);
-       expect(component['label_']).toEqual(jasmine.any(MDCFloatingLabel));
+       expect(component['label']).toEqual(jasmine.any(MDCFloatingLabel));
      });
 
   it('#constructor instantiates an outline on the `.mdc-notched-outline` element if present',
      () => {
-       const wrapper = document.createElement('div');
-       wrapper.innerHTML = `<span class="mdc-notched-outline"></span>`;
-       const child = wrapper.firstElementChild as HTMLElement;
-       wrapper.removeChild(child);
+       const child =
+           createFixture(html`<span class="mdc-notched-outline"></span>`);
 
        const root = getFixture();
        root.appendChild(child);
        const component = new MDCTextField(root);
-       expect(component['outline_']).toEqual(jasmine.any(MDCNotchedOutline));
+       expect(component['outline']).toEqual(jasmine.any(MDCNotchedOutline));
      });
 
   it('#constructor handles undefined optional sub-elements gracefully', () => {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = `
-      <div class="mdc-text-field">
+    const root = createFixture(`
+      <label class="mdc-text-field mdc-text-field--filled">
         <input type="text" class="mdc-text-field__input" id="my-text-field">
-      </div>
-    `;
-    const root = wrapper.firstElementChild as HTMLElement;
-    wrapper.removeChild(root);
+      </label>
+    `);
 
     expect(() => new MDCTextField(root)).not.toThrow();
   });
@@ -282,7 +284,7 @@ describe('MDCTextField', () => {
   it('default adapter methods handle sub-elements when present', () => {
     const root = getFixture();
     const component = new MDCTextField(root);
-    const adapter = (component.getDefaultFoundation() as any).adapter_;
+    const adapter = (component.getDefaultFoundation() as any).adapter;
     expect(adapter.hasClass('foo')).toBe(false);
     expect(adapter.getLabelWidth()).toBeGreaterThan(0);
     expect(() => adapter.floatLabel).not.toThrow();
@@ -290,17 +292,14 @@ describe('MDCTextField', () => {
 
   it('default adapter methods handle undefined optional sub-elements gracefully',
      () => {
-       const wrapper = document.createElement('div');
-       wrapper.innerHTML = `
-         <div class="mdc-text-field">
+       const root = createFixture(html`
+         <label class="mdc-text-field mdc-text-field--filled">
            <input type="text" class="mdc-text-field__input" id="my-text-field">
-         </div>
-       `;
-       const root = wrapper.firstElementChild as HTMLElement;
-       wrapper.removeChild(root);
+         </label>
+       `);
 
        const component = new MDCTextField(root);
-       const adapter = (component.getDefaultFoundation() as any).adapter_;
+       const adapter = (component.getDefaultFoundation() as any).adapter;
        expect(adapter.getLabelWidth()).toEqual(0);
        expect(adapter.hasLabel()).toBe(false);
        expect(adapter.hasOutline()).toBe(false);
@@ -341,8 +340,8 @@ describe('MDCTextField', () => {
         () => lineRipple, () => helperText, () => characterCounter, () => icon,
         () => label, () => outline);
 
-    const foundation = component['foundation_'];
-    const adapter = foundation['adapter_'];
+    const foundation = component['foundation'];
+    const adapter = foundation['adapter'];
 
     return {
       root,
@@ -409,10 +408,7 @@ describe('MDCTextField', () => {
   });
 
   it('#destroy cleans up the outline if present', () => {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = `<span class="mdc-notched-outline"></span>`;
-    const child = wrapper.firstElementChild as HTMLElement;
-    wrapper.removeChild(child);
+    const child = createFixture(`<span class="mdc-notched-outline"></span>`);
 
     const root = getFixture();
     root.appendChild(child);
@@ -422,14 +418,11 @@ describe('MDCTextField', () => {
   });
 
   it('#destroy handles undefined optional sub-elements gracefully', () => {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = `
-      <div class="mdc-text-field">
+    const root = createFixture(`
+      <label class="mdc-text-field mdc-text-field--filled">
         <input type="text" class="mdc-text-field__input" id="my-text-field">
-      </div>
-    `;
-    const root = wrapper.firstElementChild as HTMLElement;
-    wrapper.removeChild(root);
+      </label>
+    `);
 
     const component = new MDCTextField(root);
     expect(() => component.destroy).not.toThrow();
@@ -446,24 +439,21 @@ describe('MDCTextField', () => {
     const root = getFixture();
     root.classList.add('mdc-text-field--with-trailing-icon');
 
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML =
-        `<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`;
-    const child = wrapper.firstElementChild as HTMLElement;
-    wrapper.removeChild(child);
+    const child = createFixture(
+        `<i class="mdc-text-field__icon mdc-text-field__icon--trailing material-icons">3d_rotations</i>`);
     root.appendChild(child);
 
     const component = new MDCTextField(root);
     // The non-null assertion is deemed unnecessary, but without it tests on
     // GitHub side fail to compile with error `Object is possibly 'null'`
     // tslint:disable:no-unnecessary-type-assertion
-    component['leadingIcon_']!.destroy =
+    component['leadingIcon']!.destroy =
         jasmine.createSpy('leadingIcon_.destroy');
-    component['trailingIcon_']!.destroy =
+    component['trailingIcon']!.destroy =
         jasmine.createSpy('trailingIcon_.destroy');
     component.destroy();
-    expect(component['leadingIcon_']!.destroy).toHaveBeenCalled();
-    expect(component['trailingIcon_']!.destroy).toHaveBeenCalled();
+    expect(component['leadingIcon']!.destroy).toHaveBeenCalled();
+    expect(component['trailingIcon']!.destroy).toHaveBeenCalled();
     // tslint:enable:no-unnecessary-type-assertion
   });
 
@@ -477,7 +467,7 @@ describe('MDCTextField', () => {
   it('#focus calls focus on the input element', () => {
     const {root, component} = setupTest();
     const input =
-        root.querySelector('.mdc-text-field__input') as HTMLInputElement;
+        root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
     input.focus = jasmine.createSpy('focus');
     component.focus();
 
@@ -487,7 +477,7 @@ describe('MDCTextField', () => {
   it('get/set disabled updates the input element', () => {
     const {root, component} = setupTest();
     const input =
-        root.querySelector('.mdc-text-field__input') as HTMLInputElement;
+        root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
     component.disabled = true;
     expect(input.disabled).toBeTruthy();
     component.disabled = false;
@@ -497,17 +487,17 @@ describe('MDCTextField', () => {
   it('get/set disabled updates the component styles', () => {
     const {root, component} = setupTest();
     component.disabled = true;
-    expect(root.classList.contains(cssClasses.DISABLED)).toBeTruthy();
+    expect(root).toHaveClass(cssClasses.DISABLED);
     component.disabled = false;
-    expect(root.classList.contains(cssClasses.DISABLED)).toBeFalsy();
+    expect(root).not.toHaveClass(cssClasses.DISABLED);
   });
 
   it('set valid updates the component styles', () => {
     const {root, component} = setupTest();
     component.valid = false;
-    expect(root.classList.contains(cssClasses.INVALID)).toBeTruthy();
+    expect(root).toHaveClass(cssClasses.INVALID);
     component.valid = true;
-    expect(root.classList.contains(cssClasses.INVALID)).toBeFalsy();
+    expect(root).not.toHaveClass(cssClasses.INVALID);
   });
 
   it('set helperTextContent has no effect when no helper text element is present',
@@ -552,8 +542,8 @@ describe('MDCTextField', () => {
 
   it('#adapter.addClass adds a class to the root element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBeTruthy();
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('layout calls foundation notchOutline', () => {
@@ -566,18 +556,38 @@ describe('MDCTextField', () => {
   it('#adapter.removeClass removes a class from the root element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBeFalsy();
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
+  });
+
+  it('#adapter.setInputAttr sets attribute on input element', () => {
+    const {root, component} = setupTest();
+    const input =
+        root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
+
+    (component.getDefaultFoundation() as any)
+        .adapter.setInputAttr('data-foo', 'bar');
+    expect(input.getAttribute('data-foo')).toEqual('bar');
+  });
+
+  it('#adapter.removeInputAttr removes attribute on input element', () => {
+    const {root, component} = setupTest();
+    const input =
+        root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
+
+    input.setAttribute('foo', 'bar!');
+    (component.getDefaultFoundation() as any).adapter.removeInputAttr('foo');
+    expect(input.getAttribute('foo')).toBe(null);
   });
 
   it('#adapter.registerInputInteractionHandler adds a handler to the input element for a given event',
      () => {
        const {root, component} = setupTest();
        const input =
-           root.querySelector('.mdc-text-field__input') as HTMLInputElement;
+           root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
        const handler = jasmine.createSpy('eventHandler');
        (component.getDefaultFoundation() as any)
-           .adapter_.registerInputInteractionHandler('click', handler);
+           .adapter.registerInputInteractionHandler('click', handler);
        emitEvent(input, 'click');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
      });
@@ -586,12 +596,12 @@ describe('MDCTextField', () => {
      () => {
        const {root, component} = setupTest();
        const input =
-           root.querySelector('.mdc-text-field__input') as HTMLInputElement;
+           root.querySelector<HTMLInputElement>('.mdc-text-field__input')!;
        const handler = jasmine.createSpy('eventHandler');
 
        input.addEventListener('click', handler);
        (component.getDefaultFoundation() as any)
-           .adapter_.deregisterInputInteractionHandler('click', handler);
+           .adapter.deregisterInputInteractionHandler('click', handler);
        emitEvent(input, 'click');
        expect(handler).not.toHaveBeenCalled();
      });
@@ -601,7 +611,7 @@ describe('MDCTextField', () => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('TextFieldInteractionHandler');
        (component.getDefaultFoundation() as any)
-           .adapter_.registerTextFieldInteractionHandler('click', handler);
+           .adapter.registerTextFieldInteractionHandler('click', handler);
        emitEvent(root, 'click');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
      });
@@ -612,7 +622,7 @@ describe('MDCTextField', () => {
        const handler = jasmine.createSpy('TextFieldInteractionHandler');
        root.addEventListener('click', handler);
        (component.getDefaultFoundation() as any)
-           .adapter_.registerTextFieldInteractionHandler('click', handler);
+           .adapter.registerTextFieldInteractionHandler('click', handler);
        emitEvent(root, 'click');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
      });
@@ -621,16 +631,16 @@ describe('MDCTextField', () => {
      (done) => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('ValidationAttributeChangeHandler');
-       handler.withArgs(jasmine.any(Array)).and.callFake((arr) => {
+       handler.withArgs(jasmine.any(Array)).and.callFake((arr: string[]) => {
          if (arr.indexOf('required') !== -1) {
            done();
          }
        });
 
-       component['foundation_']['adapter_']
+       component['foundation']['adapter']
            .registerValidationAttributeChangeHandler(handler);
-       (root.querySelector('.mdc-text-field__input') as HTMLInputElement)
-           .required = true;
+       (root.querySelector<HTMLInputElement>('.mdc-text-field__input')!
+        ).required = true;
      });
 
   it('#adapter.deregisterValidationAttributeChangeHandler disconnects the passed observer',
@@ -640,29 +650,28 @@ describe('MDCTextField', () => {
        const observer = new MutationObserver(() => undefined);
        observer.disconnect = disconnect;
 
-       component['foundation_']['adapter_']
+       component['foundation']['adapter']
            .deregisterValidationAttributeChangeHandler(observer);
        expect(disconnect).toHaveBeenCalled();
      });
 
   it('#adapter.getNativeInput returns the component input element', () => {
     const {root, component} = setupTest();
-    expect((component.getDefaultFoundation() as any).adapter_.getNativeInput())
-        .toEqual(root.querySelector('.mdc-text-field__input'));
+    expect((component.getDefaultFoundation() as any).adapter.getNativeInput())
+        .toEqual(root.querySelector<HTMLElement>('.mdc-text-field__input'));
   });
 
   it('#adapter.activateLineRipple calls the activate method on the line ripple',
      () => {
        const {component, lineRipple} = setupTest();
-       (component.getDefaultFoundation() as any).adapter_.activateLineRipple();
+       (component.getDefaultFoundation() as any).adapter.activateLineRipple();
        expect(lineRipple.activate).toHaveBeenCalled();
      });
 
   it('#adapter.deactivateLineRipple calls the deactivate method on the line ripple',
      () => {
        const {component, lineRipple} = setupTest();
-       (component.getDefaultFoundation() as any)
-           .adapter_.deactivateLineRipple();
+       (component.getDefaultFoundation() as any).adapter.deactivateLineRipple();
        expect(lineRipple.deactivate).toHaveBeenCalled();
      });
 
@@ -670,23 +679,28 @@ describe('MDCTextField', () => {
      () => {
        const {component, lineRipple} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setLineRippleTransformOrigin(100);
+           .adapter.setLineRippleTransformOrigin(100);
        expect(lineRipple.setRippleCenter).toHaveBeenCalledWith(100);
      });
 
   it('should not focus input when clicking icon', () => {
     const root = getFixture();
-    const icon = root.querySelector('.mdc-text-field__icon') as HTMLElement;
+    const icon = root.querySelector<HTMLElement>('.mdc-text-field__icon')!;
     const component = new MDCTextField(root);
     document.body.appendChild(root);
-    component.root_.click();
-    const input = (component as any).input_ as HTMLInputElement;
-    expect(document.activeElement).toBe(input, 'input should be focused');
+    root.click();
+    const input = (component as any).input as HTMLInputElement;
+    expect(document.activeElement)
+        .withContext('input should be focused')
+        .toBe(input);
     input.blur();
-    expect(document.activeElement).not.toBe(input, 'ensure input was blurred');
+    expect(document.activeElement)
+        .withContext('ensure input was blurred')
+        .not.toBe(input);
     icon.click();
     expect(document.activeElement)
-        .not.toBe(input, 'input should not be focused');
+        .withContext('input should not be focused')
+        .not.toBe(input);
     document.body.removeChild(root);
   });
 
@@ -800,5 +814,53 @@ describe('MDCTextField', () => {
     expect(component.step).toEqual('8');
     component.step = '10';
     expect(component.step).toEqual('10');
+  });
+
+  it('get prefixText returns prefix textContent, or null without a prefix',
+     () => {
+       const root = getFixture();
+       const component = new MDCTextField(root);
+       expect(component.prefixText).toEqual(null);
+       const prefixRoot = getFixtureWithPrefix();
+       const prefixComponent = new MDCTextField(prefixRoot);
+       expect(prefixComponent.prefixText).toEqual('$');
+     });
+
+  it('set prefixText changes prefix textContent, if it exists', () => {
+    const root = getFixture();
+    const component = new MDCTextField(root);
+    component.prefixText = 'foo' as string | null;
+    expect(component.prefixText).toEqual(null);
+    const prefixRoot = getFixtureWithPrefix();
+    const prefixComponent = new MDCTextField(prefixRoot);
+    prefixComponent.prefixText = 'foo';
+    expect(prefixComponent.prefixText).toEqual('foo');
+    const prefixEl =
+        prefixRoot.querySelector<HTMLElement>(strings.PREFIX_SELECTOR)!;
+    expect(prefixEl.textContent).toEqual('foo');
+  });
+
+  it('get suffixText returns suffix textContent, or null without a suffix',
+     () => {
+       const root = getFixture();
+       const component = new MDCTextField(root);
+       expect(component.suffixText).toEqual(null);
+       const suffixRoot = getFixtureWithSuffix();
+       const suffixComponent = new MDCTextField(suffixRoot);
+       expect(suffixComponent.suffixText).toEqual('/100');
+     });
+
+  it('set suffixText changes suffix textContent, if it exists', () => {
+    const root = getFixture();
+    const component = new MDCTextField(root);
+    component.suffixText = 'foo' as string | null;
+    expect(component.suffixText).toEqual(null);
+    const suffixRoot = getFixtureWithSuffix();
+    const suffixComponent = new MDCTextField(suffixRoot);
+    suffixComponent.suffixText = 'foo';
+    expect(suffixComponent.suffixText).toEqual('foo');
+    const suffixEl =
+        suffixRoot.querySelector<HTMLElement>(strings.SUFFIX_SELECTOR)!;
+    expect(suffixEl.textContent).toEqual('foo');
   });
 });

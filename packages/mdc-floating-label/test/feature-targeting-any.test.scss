@@ -1,5 +1,5 @@
-@use "../mixins" as floating-label;
-@use "@material/feature-targeting/functions" as feature;
+@use '../mixins' as floating-label;
+@use '@material/feature-targeting/feature-targeting';
 
 @mixin test($query) {
   .test {
@@ -10,8 +10,9 @@
     @include floating-label.float-position(100%, $query: $query);
     @include floating-label.shake-animation(standard, $query: $query);
     @include floating-label.max-width(100%, $query: $query);
+    @include floating-label.float-transition(250ms, linear, $query: $query);
   }
 }
 
 // This shouldn't output any CSS.
-@include test(feature.any());
+@include test(feature-targeting.any());

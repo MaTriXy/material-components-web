@@ -66,8 +66,8 @@ describe('MDCRipple', () => {
      () => {
        const root = getFixture();
        const component = MDCRipple.attachTo(root);
-       expect(Object.keys(MDCRipple.createAdapter({root_: root})))
-           .toEqual(Object.keys(component['foundation_']['adapter_']));
+       expect(Object.keys(MDCRipple.createAdapter({root})))
+           .toEqual(Object.keys(component['foundation']['adapter']));
      });
 
   function setupTest() {
@@ -79,48 +79,48 @@ describe('MDCRipple', () => {
   it(`set unbounded() adds ${cssClasses.UNBOUNDED} when truthy`, () => {
     const {root, component} = setupTest();
     component.unbounded = true;
-    expect(root.classList.contains(cssClasses.UNBOUNDED)).toBeTruthy();
+    expect(root).toHaveClass(cssClasses.UNBOUNDED);
   });
 
   it(`set unbounded() removes ${cssClasses.UNBOUNDED} when falsy`, () => {
     const {root, component} = setupTest();
     root.classList.add(cssClasses.UNBOUNDED);
     component.unbounded = false;
-    expect(root.classList.contains(cssClasses.UNBOUNDED)).toBeFalsy();
+    expect(root).not.toHaveClass(cssClasses.UNBOUNDED);
   });
 
   it('activate() delegates to the foundation', () => {
     const {component} = setupTest();
-    component['foundation_'].activate = jasmine.createSpy('');
+    component['foundation'].activate = jasmine.createSpy('');
     component.activate();
-    expect(component['foundation_'].activate).toHaveBeenCalled();
+    expect(component['foundation'].activate).toHaveBeenCalled();
   });
 
   it('deactivate() delegates to the foundation', () => {
     const {component} = setupTest();
-    component['foundation_'].deactivate = jasmine.createSpy('');
+    component['foundation'].deactivate = jasmine.createSpy('');
     component.deactivate();
-    expect(component['foundation_'].deactivate).toHaveBeenCalled();
+    expect(component['foundation'].deactivate).toHaveBeenCalled();
   });
 
   it('layout() delegates to the foundation', () => {
     const {component} = setupTest();
-    component['foundation_'].layout = jasmine.createSpy('');
+    component['foundation'].layout = jasmine.createSpy('');
     component.layout();
-    expect(component['foundation_'].layout).toHaveBeenCalled();
+    expect(component['foundation'].layout).toHaveBeenCalled();
   });
 
   it('adapter#browserSupportsCssVars delegates to util', () => {
     const {component} = setupTest();
     expect((component.getDefaultFoundation() as any)
-               .adapter_.browserSupportsCssVars(window))
+               .adapter.browserSupportsCssVars(window))
         .toEqual(util.supportsCssVariables(window));
   });
 
   it('adapter#isUnbounded delegates to unbounded getter', () => {
     const {component} = setupTest();
     component.unbounded = true;
-    expect((component.getDefaultFoundation() as any).adapter_.isUnbounded())
+    expect((component.getDefaultFoundation() as any).adapter.isUnbounded())
         .toBe(true);
   });
 
@@ -129,21 +129,21 @@ describe('MDCRipple', () => {
        const {component} = setupTest();
        component.disabled = true;
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.isSurfaceDisabled())
+                  .adapter.isSurfaceDisabled())
            .toBe(true);
      });
 
   it('adapter#addClass adds a class to the root', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('adapter#removeClass removes a class from the root', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('adapter#containsEventTarget returns true if the passed element is a descendant of the root element',
@@ -153,10 +153,10 @@ describe('MDCRipple', () => {
        const notChild = getFixture();
        root.appendChild(child);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.containsEventTarget(child))
+                  .adapter.containsEventTarget(child))
            .toBe(true);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.containsEventTarget(notChild))
+                  .adapter.containsEventTarget(notChild))
            .toBe(false);
      });
 
@@ -165,7 +165,7 @@ describe('MDCRipple', () => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('interactionHandler');
        (component.getDefaultFoundation() as any)
-           .adapter_.registerInteractionHandler('foo', handler);
+           .adapter.registerInteractionHandler('foo', handler);
        emitEvent(root, 'foo');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
      });
@@ -176,7 +176,7 @@ describe('MDCRipple', () => {
        const handler = jasmine.createSpy('interactionHandler');
        root.addEventListener('foo', handler);
        (component.getDefaultFoundation() as any)
-           .adapter_.deregisterInteractionHandler('foo', handler);
+           .adapter.deregisterInteractionHandler('foo', handler);
        emitEvent(root, 'foo');
        expect(handler).not.toHaveBeenCalledWith(jasmine.anything());
      });
@@ -186,7 +186,7 @@ describe('MDCRipple', () => {
        const {component} = setupTest();
        const handler = jasmine.createSpy('interactionHandler');
        (component.getDefaultFoundation() as any)
-           .adapter_.registerDocumentInteractionHandler('foo', handler);
+           .adapter.registerDocumentInteractionHandler('foo', handler);
        emitEvent(document.documentElement, 'foo');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
      });
@@ -197,7 +197,7 @@ describe('MDCRipple', () => {
        const handler = jasmine.createSpy('interactionHandler');
        root.addEventListener('foo', handler);
        (component.getDefaultFoundation() as any)
-           .adapter_.deregisterDocumentInteractionHandler('foo', handler);
+           .adapter.deregisterDocumentInteractionHandler('foo', handler);
        emitEvent(document.documentElement, 'foo');
        expect(handler).not.toHaveBeenCalledWith(jasmine.anything());
      });
@@ -207,7 +207,7 @@ describe('MDCRipple', () => {
        const {component} = setupTest();
        const handler = jasmine.createSpy('resizeHandler');
        (component.getDefaultFoundation() as any)
-           .adapter_.registerResizeHandler(handler);
+           .adapter.registerResizeHandler(handler);
        emitEvent(window, 'resize');
        expect(handler).toHaveBeenCalledWith(jasmine.anything());
        window.removeEventListener('resize', handler);
@@ -219,7 +219,7 @@ describe('MDCRipple', () => {
        const handler = jasmine.createSpy('resizeHandler');
        window.addEventListener('resize', handler);
        (component.getDefaultFoundation() as any)
-           .adapter_.deregisterResizeHandler(handler);
+           .adapter.deregisterResizeHandler(handler);
        emitEvent(window, 'resize');
        expect(handler).not.toHaveBeenCalledWith(jasmine.anything());
        // Just to be safe
@@ -231,7 +231,7 @@ describe('MDCRipple', () => {
        () => {
          const {root, component} = setupTest();
          (component.getDefaultFoundation() as any)
-             .adapter_.updateCssVariable('--foo', 'red');
+             .adapter.updateCssVariable('--foo', 'red');
          expect(root.style.getPropertyValue('--foo')).toEqual('red');
        });
   }
@@ -241,7 +241,7 @@ describe('MDCRipple', () => {
        const {root, component} = setupTest();
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.computeBoundingRect())
+                  .adapter.computeBoundingRect())
            .toEqual(root.getBoundingClientRect());
        document.body.removeChild(root);
      });
@@ -250,7 +250,7 @@ describe('MDCRipple', () => {
      () => {
        const {component} = setupTest();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getWindowPageOffset())
+                  .adapter.getWindowPageOffset())
            .toEqual({
              x: window.pageXOffset,
              y: window.pageYOffset,
@@ -259,16 +259,16 @@ describe('MDCRipple', () => {
 
   it(`handleFocus() adds class ${cssClasses.BG_FOCUSED}`, () => {
     const {root, component} = setupTest();
-    component['foundation_'].handleFocus();
+    component['foundation'].handleFocus();
     jasmine.clock().tick(1);
-    expect(root.classList.contains(cssClasses.BG_FOCUSED)).toBe(true);
+    expect(root).toHaveClass(cssClasses.BG_FOCUSED);
   });
 
   it(`handleBlur() removes class ${cssClasses.BG_FOCUSED}`, () => {
     const {root, component} = setupTest();
     root.classList.add(cssClasses.BG_FOCUSED);
-    component['foundation_'].handleBlur();
+    component['foundation'].handleBlur();
     jasmine.clock().tick(1);
-    expect(root.classList.contains(cssClasses.BG_FOCUSED)).toBe(false);
+    expect(root).not.toHaveClass(cssClasses.BG_FOCUSED);
   });
 });

@@ -6,62 +6,48 @@ iconId: radio_button
 path: /catalog/input-controls/radio-buttons/
 -->
 
-# Radio Buttons
+# Selection controls: radio buttons
 
-<!--<div class="article__asset">
-  <a class="article__asset-link"
-     href="https://material-components.github.io/material-components-web-catalog/#/component/radio">
-    <img src="{{ site.rootpath }}/images/mdc_web_screenshots/radios.png" width="60" alt="Radio buttons screenshot">
-  </a>
-</div>-->
+[Selection controls](https://material.io/components/selection-controls#usage) allow the user to select options.
 
-Radio buttons allow the user to select one option from a set while seeing all available options.
+Use radio buttons to:
 
-## Design & API Documentation
+* Select a single option from a list
+* Expose all available options
+* If available options can be collapsed, consider using a dropdown menu instead to use less space.
 
-<ul class="icon-list">
-  <li class="icon-list-item icon-list-item--spec">
-    <a href="https://material.io/go/design-radio-buttons">Material Design guidelines: Selection Controls – Radio buttons</a>
-  </li>
-  <li class="icon-list-item icon-list-item--link">
-    <a href="https://material-components.github.io/material-components-web-catalog/#/component/radio">Demo</a>
-  </li>
-</ul>
+![Radio button hero example for menu options](images/radio-button-hero.png)
 
-## Installation
+**Contents**
+
+* [Using radio buttons](#using-radio-buttons)
+* [Radio buttons](#radio-buttons)
+* [Other variants](#other-variants)
+* [API](#api)
+* [Usage within web frameworks](#usage-within-web-frameworks)
+
+## Using radio buttons
+
+Radio buttons allow the user to select one option from a set. Use radio buttons when the user needs to see all available options. If available options can be collapsed, consider using a dropdown menu because it uses less space.
+
+### Installing radio buttons
 
 ```
 npm install @material/radio
 ```
 
-## Basic Usage
-
-We recommend using MDC Radio with [MDC Form Field](../mdc-form-field) for enhancements such as label alignment, label activation of the ripple interaction effect, and RTL-awareness.
-
-### HTML Structure
-
-```html
-<div class="mdc-form-field">
-  <div class="mdc-radio">
-    <input class="mdc-radio__native-control" type="radio" id="radio-1" name="radios" checked>
-    <div class="mdc-radio__background">
-      <div class="mdc-radio__outer-circle"></div>
-      <div class="mdc-radio__inner-circle"></div>
-    </div>
-    <div class="mdc-radio__ripple"></div>
-  </div>
-  <label for="radio-1">Radio 1</label>
-</div>
-```
-
 ### Styles
 
 ```scss
-@use "@material/form-field/mdc-form-field";
-@use "@material/radio/mdc-radio";
+@use "@material/radio/styles";
+@use "@material/form-field";
+
+@include form-field.core-styles;
 ```
 
-### JavaScript Instantiation
+**Note: The form field styles are only required when the radio button is used with the form field.**
+
+### JavaScript instantiation
 
 The radio button will work without JavaScript, but you can enhance it with a ripple interaction effect by instantiating `MDCRadio` on the `mdc-radio` element. To activate the ripple effect upon interacting with the label, you must also instantiate `MDCFormField` on the `mdc-form-field` element and set the `MDCRadio` instance as its `input`.
 
@@ -74,11 +60,61 @@ const formField = new MDCFormField(document.querySelector('.mdc-form-field'));
 formField.input = radio;
 ```
 
-> See [Importing the JS component](../../docs/importing-js.md) for more information on how to import JavaScript.
+**Note: See [Importing the JS component](../../docs/importing-js.md) for more information on how to import JavaScript.**
 
-## Variants
+### Making radio buttons accessible
 
-### Disabled
+Material Design spec advises that touch targets should be at least 48px x 48px.
+To meet this requirement, add the `mdc-radio--touch` class to your radio as follows:
+
+```html
+<div class="mdc-touch-target-wrapper">
+  <div class="mdc-radio mdc-radio--touch">
+    <input class="mdc-radio__native-control" type="radio" id="radio-1" name="radios" checked>
+    <div class="mdc-radio__background">
+      <div class="mdc-radio__outer-circle"></div>
+      <div class="mdc-radio__inner-circle"></div>
+    </div>
+    <div class="mdc-radio__ripple"></div>
+    <div class="mdc-radio__focus-ring"></div>
+  </div>
+</div>
+```
+
+Note that the outer  `mdc-touch-target-wrapper` element is only necessary if you want to avoid potentially overlapping touch targets on adjacent elements (due to collapsing margins).
+
+The `mdc-radio__focus-ring` element ensures that a focus indicator is displayed in high contrast mode around the active/focused radio button.
+
+## Radio buttons
+
+We recommend using MDC Radio with [MDC Form Field](../mdc-form-field) for enhancements such as label alignment, label activation of the ripple interaction effect, and RTL-awareness.
+
+### Radio button example
+
+```html
+<div class="mdc-form-field">
+  <div class="mdc-radio">
+    <input class="mdc-radio__native-control" type="radio" id="radio-1" name="radios" checked>
+    <div class="mdc-radio__background">
+      <div class="mdc-radio__outer-circle"></div>
+      <div class="mdc-radio__inner-circle"></div>
+    </div>
+    <div class="mdc-radio__ripple"></div>
+    <div class="mdc-radio__focus-ring"></div>
+  </div>
+  <label for="radio-1">Radio 1</label>
+</div>
+```
+
+### Radio button states
+
+Radio buttons can be selected or unselected. Radio buttons have enabled, disabled, hover, focused, and pressed states.
+
+![Radio button states in a table. Columns are enabled, disabled, hover, focused, pressed. Rows are selected or unselected](images/radio-button-states.png)
+
+## Other variants
+
+### Disabled radio buttons
 
 To disable a radio button, add the `mdc-radio--disabled` class to the root element and set the `disabled` attribute on the `<input>` element.
 Disabled radio buttons cannot be interacted with and have no visual interaction effect.
@@ -92,38 +128,17 @@ Disabled radio buttons cannot be interacted with and have no visual interaction 
       <div class="mdc-radio__inner-circle"></div>
     </div>
     <div class="mdc-radio__ripple"></div>
+    <div class="mdc-radio__focus-ring"></div>
   </div>
   <label for="radio-1">Radio 1</label>
 </div>
 ```
 
-## Additional Information
+## API
 
-### Accessibility
-
-Material Design spec advises that touch targets should be at least 48 x 48 px.
-To meet this requirement, add the `mdc-radio--touch` class to your radio as follows:
-
-```html
-<div class="mdc-touch-target-wrapper">
-  <div class="mdc-radio mdc-radio--touch">
-    <input class="mdc-radio__native-control" type="radio" id="radio-1" name="radios" checked>
-    <div class="mdc-radio__background">
-      <div class="mdc-radio__outer-circle"></div>
-      <div class="mdc-radio__inner-circle"></div>
-    </div>
-    <div class="mdc-radio__ripple"></div>
-  </div>
-</div>
-```
-
-Note that the outer  `mdc-touch-target-wrapper` element is only necessary if you want to avoid potentially overlapping touch targets on adjacent elements (due to collapsing margins).
-
-## Style Customization
+### Sass mixins
 
 MDC Radio uses [MDC Theme](../mdc-theme)'s `secondary` color by default. Use the following mixins to customize it.
-
-### Sass Mixins
 
 Mixin | Description
 --- | ---
@@ -138,7 +153,7 @@ Mixin | Description
 `ripple-size($size)` | Sets custom ripple size of radio.
 `density($density-scale)` | Sets density scale for radio. Supported density scale values are `-3`, `-2`, `-1` and `0` (default).
 
-## `MDCRadio` Properties and Methods
+## `MDCRadio` properties and methods
 
 Property | Value Type | Description
 --- | --- | ---
@@ -146,7 +161,7 @@ Property | Value Type | Description
 `disabled` | Boolean | Setter/getter for the radio's disabled state. Setter proxies to foundation's `setDisabled` method
 `value` | String | Setter/getter for the radio's value
 
-## Usage within Web Frameworks
+## Usage within web frameworks
 
 If you are using a JavaScript framework, such as React or Angular, you can create a Radio button for your framework. Depending on your needs, you can use the _Simple Approach: Wrapping MDC Web Vanilla Components_, or the _Advanced Approach: Using Foundations and Adapters_. Please follow the instructions [here](../../docs/integrating-into-frameworks.md).
 

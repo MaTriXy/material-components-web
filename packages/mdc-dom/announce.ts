@@ -22,7 +22,7 @@
  */
 
 /**
- * Priorities for the announce function
+ * Priorities for the announce function.
  */
 export enum AnnouncerPriority {
   POLITE = 'polite',
@@ -30,15 +30,28 @@ export enum AnnouncerPriority {
 }
 
 /**
+ * Options for the announce function.
+ */
+export interface AnnouncerMessageOptions {
+  priority?: AnnouncerPriority;
+  ownerDocument?: Document;
+}
+
+/**
+ * Data attribute added to live region element.
+ */
+export const DATA_MDC_DOM_ANNOUNCE = 'data-mdc-dom-announce';
+
+/**
  * Announces the given message with optional priority, defaulting to "polite"
  */
-export function announce(message: string, priority?: AnnouncerPriority) {
-  Announcer.getInstance().say(message, priority);
+export function announce(message: string, options?: AnnouncerMessageOptions) {
+  Announcer.getInstance().say(message, options);
 }
 
 class Announcer {
   private static instance: Announcer;
-  private readonly liveRegions: Map<AnnouncerPriority, Element>;
+  private readonly liveRegions: Map<Document, Map<AnnouncerPriority, Element>>;
 
   static getInstance(): Announcer {
     if (!Announcer.instance) {
@@ -53,31 +66,46 @@ class Announcer {
     this.liveRegions = new Map();
   }
 
-  say(message: string, priority: AnnouncerPriority = AnnouncerPriority.POLITE) {
-    const liveRegion = this.getLiveRegion(priority);
+  say(message: string, options?: AnnouncerMessageOptions) {
+    const priority = options?.priority ?? AnnouncerPriority.POLITE;
+    const ownerDocument = options?.ownerDocument ?? document;
+    const liveRegion = this.getLiveRegion(priority, ownerDocument);
     // Reset the region to pick up the message, even if the message is the
     // exact same as before.
     liveRegion.textContent = '';
     // Timeout is necessary for screen readers like NVDA and VoiceOver.
     setTimeout(() => {
       liveRegion.textContent = message;
+      ownerDocument.addEventListener('click', clearLiveRegion);
     }, 1);
+
+    function clearLiveRegion() {
+      liveRegion.textContent = '';
+      ownerDocument.removeEventListener('click', clearLiveRegion);
+    }
   }
 
-  private getLiveRegion(priority: AnnouncerPriority): Element {
-    const existingLiveRegion = this.liveRegions.get(priority);
-    if (existingLiveRegion &&
-        document.body.contains(existingLiveRegion as Node)) {
+  private getLiveRegion(priority: AnnouncerPriority, ownerDocument: Document):
+      Element {
+    let documentLiveRegions = this.liveRegions.get(ownerDocument);
+    if (!documentLiveRegions) {
+      documentLiveRegions = new Map();
+      this.liveRegions.set(ownerDocument, documentLiveRegions);
+    }
+
+    const existingLiveRegion = documentLiveRegions.get(priority);
+    if (existingLiveRegion && ownerDocument.body.contains(existingLiveRegion)) {
       return existingLiveRegion;
     }
 
-    const liveRegion = this.createLiveRegion(priority);
-    this.liveRegions.set(priority, liveRegion);
+    const liveRegion = this.createLiveRegion(priority, ownerDocument);
+    documentLiveRegions.set(priority, liveRegion);
     return liveRegion;
   }
 
-  private createLiveRegion(priority: AnnouncerPriority): Element {
-    const el = document.createElement('div');
+  private createLiveRegion(
+      priority: AnnouncerPriority, ownerDocument: Document): HTMLDivElement {
+    const el = ownerDocument.createElement('div');
     el.style.position = 'absolute';
     el.style.top = '-9999px';
     el.style.left = '-9999px';
@@ -85,7 +113,8 @@ class Announcer {
     el.style.overflow = 'hidden';
     el.setAttribute('aria-atomic', 'true');
     el.setAttribute('aria-live', priority);
-    document.body.appendChild(el);
+    el.setAttribute(DATA_MDC_DOM_ANNOUNCE, 'true');
+    ownerDocument.body.appendChild(el);
     return el;
   }
 }

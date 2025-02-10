@@ -23,15 +23,15 @@
 
 import {MDCRipple} from '../../mdc-ripple/index';
 import {supportsCssVariables} from '../../mdc-ripple/util';
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 import {createMockFoundation} from '../../../testing/helpers/foundation';
 import {setUpMdcTestEnvironment} from '../../../testing/helpers/setup';
 import {strings} from '../constants';
 import {MDCCheckbox, MDCCheckboxFoundation} from '../index';
 
-function getFixture(): Element {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+function getFixture() {
+  return createFixture(html`
     <div class="mdc-checkbox">
       <input type="checkbox"
              class="mdc-checkbox__native-control"
@@ -48,16 +48,13 @@ function getFixture(): Element {
         <div class="mdc-checkbox__mixedmark"></div>
       </div>
     </div>
-  `;
-  const el = wrapper.firstElementChild as Element;
-  wrapper.removeChild(el);
-  return el;
+  `);
 }
 
 function setupTest() {
   const root = getFixture();
   const cb =
-      root.querySelector(strings.NATIVE_CONTROL_SELECTOR) as HTMLInputElement;
+      root.querySelector<HTMLInputElement>(strings.NATIVE_CONTROL_SELECTOR)!;
   const component = new MDCCheckbox(root);
   return {root, cb, component};
 }
@@ -65,7 +62,7 @@ function setupTest() {
 function setupMockFoundationTest() {
   const root = getFixture();
   const cb =
-      root.querySelector(strings.NATIVE_CONTROL_SELECTOR) as HTMLInputElement;
+      root.querySelector<HTMLInputElement>(strings.NATIVE_CONTROL_SELECTOR)!;
   const mockFoundation = createMockFoundation(MDCCheckboxFoundation);
   const component = new MDCCheckbox(root, mockFoundation);
   return {root, cb, component, mockFoundation};
@@ -78,7 +75,7 @@ describe('MDCCheckbox', () => {
     it('#constructor initializes the root element with a ripple', () => {
       const {root} = setupTest();
       jasmine.clock().tick(1);
-      expect(root.classList.contains('mdc-ripple-upgraded')).toBeTruthy();
+      expect(root).toHaveClass('mdc-ripple-upgraded');
     });
 
     it('#destroy removes the ripple', () => {
@@ -86,26 +83,24 @@ describe('MDCCheckbox', () => {
       jasmine.clock().tick(1);
       component.destroy();
       jasmine.clock().tick(1);
-      expect(root.classList.contains('mdc-ripple-upgraded')).toBeFalsy();
+      expect(root).not.toHaveClass('mdc-ripple-upgraded');
     });
 
     it('(regression) activates ripple on keydown when the input element surface is active',
        () => {
          const {root} = setupTest();
-         const input = root.querySelector('input') as HTMLInputElement;
+         const input = root.querySelector('input')!;
          jasmine.clock().tick(1);
 
          const fakeMatches = jasmine.createSpy('.matches');
          fakeMatches.and.returnValue(true);
          input.matches = fakeMatches;
 
-         expect(root.classList.contains('mdc-ripple-upgraded')).toBe(true);
+         expect(root).toHaveClass('mdc-ripple-upgraded');
          emitEvent(input, 'keydown');
          jasmine.clock().tick(1);
 
-         expect(root.classList.contains(
-                    'mdc-ripple-upgraded--foreground-activation'))
-             .toBe(true);
+         expect(root).toHaveClass('mdc-ripple-upgraded--foreground-activation');
        });
   }
 
@@ -152,17 +147,16 @@ describe('MDCCheckbox', () => {
 
   it('checkbox change event calls #foundation.handleChange', () => {
     const {cb, component} = setupTest();
-    (component as any).foundation_.handleChange = jasmine.createSpy();
+    (component as any).foundation.handleChange = jasmine.createSpy();
     emitEvent(cb, 'change');
-    expect((component as any).foundation_.handleChange).toHaveBeenCalled();
+    expect((component as any).foundation.handleChange).toHaveBeenCalled();
   });
 
   it('root animationend event calls #foundation.handleAnimationEnd', () => {
     const {root, component} = setupTest();
-    (component as any).foundation_.handleAnimationEnd = jasmine.createSpy();
+    (component as any).foundation.handleAnimationEnd = jasmine.createSpy();
     emitEvent(root, 'animationend');
-    expect((component as any).foundation_.handleAnimationEnd)
-        .toHaveBeenCalled();
+    expect((component as any).foundation.handleAnimationEnd).toHaveBeenCalled();
   });
 
   it('"checked" property change hook calls foundation#handleChange', () => {
@@ -180,18 +174,18 @@ describe('MDCCheckbox', () => {
 
   it('checkbox change event handler is destroyed on #destroy', () => {
     const {cb, component} = setupTest();
-    (component as any).foundation_.handleChange = jasmine.createSpy();
+    (component as any).foundation.handleChange = jasmine.createSpy();
     component.destroy();
     emitEvent(cb, 'change');
-    expect((component as any).foundation_.handleChange).not.toHaveBeenCalled();
+    expect((component as any).foundation.handleChange).not.toHaveBeenCalled();
   });
 
   it('root animationend event handler is destroyed on #destroy', () => {
     const {root, component} = setupTest();
-    (component as any).foundation_.handleAnimationEnd = jasmine.createSpy();
+    (component as any).foundation.handleAnimationEnd = jasmine.createSpy();
     component.destroy();
     emitEvent(root, 'animationend');
-    expect((component as any).foundation_.handleAnimationEnd)
+    expect((component as any).foundation.handleAnimationEnd)
         .not.toHaveBeenCalled();
   });
 
@@ -211,22 +205,22 @@ describe('MDCCheckbox', () => {
 
   it('adapter#addClass adds a class to the root element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBeTruthy();
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('adapter#removeClass removes a class from the root element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBeFalsy();
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('adapter#setNativeControlAttr sets an attribute on the input element',
      () => {
        const {cb, component} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setNativeControlAttr('aria-checked', 'mixed');
+           .adapter.setNativeControlAttr('aria-checked', 'mixed');
        expect(cb.getAttribute('aria-checked')).toEqual('mixed');
      });
 
@@ -235,7 +229,7 @@ describe('MDCCheckbox', () => {
        const {cb, component} = setupTest();
        cb.setAttribute('aria-checked', 'mixed');
        (component.getDefaultFoundation() as any)
-           .adapter_.removeNativeControlAttr('aria-checked');
+           .adapter.removeNativeControlAttr('aria-checked');
        expect(cb.hasAttribute('aria-checked')).toBe(false);
      });
 
@@ -250,7 +244,7 @@ describe('MDCCheckbox', () => {
          configurable: true,
        });
 
-       (component.getDefaultFoundation() as any).adapter_.forceLayout();
+       (component.getDefaultFoundation() as any).adapter.forceLayout();
        expect(mockGetter).toHaveBeenCalled();
      });
 
@@ -259,7 +253,7 @@ describe('MDCCheckbox', () => {
        const {root, component} = setupTest();
        document.body.appendChild(root);
        expect(
-           (component.getDefaultFoundation() as any).adapter_.isAttachedToDOM())
+           (component.getDefaultFoundation() as any).adapter.isAttachedToDOM())
            .toBeTruthy();
        document.body.removeChild(root);
      });
@@ -268,7 +262,7 @@ describe('MDCCheckbox', () => {
      () => {
        const {component} = setupTest();
        expect(
-           (component.getDefaultFoundation() as any).adapter_.isAttachedToDOM())
+           (component.getDefaultFoundation() as any).adapter.isAttachedToDOM())
            .toBeFalsy();
      });
 
@@ -277,7 +271,7 @@ describe('MDCCheckbox', () => {
        const {cb, component} = setupTest();
        cb.indeterminate = true;
        expect(
-           (component.getDefaultFoundation() as any).adapter_.isIndeterminate())
+           (component.getDefaultFoundation() as any).adapter.isIndeterminate())
            .toBe(true);
      });
 
@@ -286,28 +280,27 @@ describe('MDCCheckbox', () => {
        const {cb, component} = setupTest();
        cb.indeterminate = false;
        expect(
-           (component.getDefaultFoundation() as any).adapter_.isIndeterminate())
+           (component.getDefaultFoundation() as any).adapter.isIndeterminate())
            .toBe(false);
      });
 
   it('#adapter.isChecked returns true when checkbox is checked', () => {
     const {cb, component} = setupTest();
     cb.checked = true;
-    expect((component.getDefaultFoundation() as any).adapter_.isChecked())
+    expect((component.getDefaultFoundation() as any).adapter.isChecked())
         .toBe(true);
   });
 
   it('#adapter.isChecked returns false when checkbox is not checked', () => {
     const {cb, component} = setupTest();
     cb.checked = false;
-    expect((component.getDefaultFoundation() as any).adapter_.isChecked())
+    expect((component.getDefaultFoundation() as any).adapter.isChecked())
         .toBe(false);
   });
 
   it('#adapter.hasNativeControl returns true when checkbox exists', () => {
     const {component} = setupTest();
-    expect(
-        (component.getDefaultFoundation() as any).adapter_.hasNativeControl())
+    expect((component.getDefaultFoundation() as any).adapter.hasNativeControl())
         .toBe(true);
   });
 
@@ -315,7 +308,7 @@ describe('MDCCheckbox', () => {
      () => {
        const {cb, component} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setNativeControlDisabled(true);
+           .adapter.setNativeControlDisabled(true);
        expect(cb.disabled).toBe(true);
      });
 
@@ -323,7 +316,7 @@ describe('MDCCheckbox', () => {
      () => {
        const {cb, component} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setNativeControlDisabled(false);
+           .adapter.setNativeControlDisabled(false);
        expect(cb.disabled).toBe(false);
      });
 });

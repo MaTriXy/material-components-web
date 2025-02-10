@@ -33,6 +33,7 @@ import {MDCNotchedOutline, MDCNotchedOutlineFactory} from '@material/notched-out
 import {MDCRippleAdapter} from '@material/ripple/adapter';
 import {MDCRipple} from '@material/ripple/component';
 import {MDCRippleFoundation} from '@material/ripple/foundation';
+
 import {MDCSelectAdapter} from './adapter';
 import {cssClasses, strings} from './constants';
 import {MDCSelectFoundation} from './foundation';
@@ -40,79 +41,93 @@ import {MDCSelectHelperText, MDCSelectHelperTextFactory} from './helper-text/com
 import {MDCSelectIcon, MDCSelectIconFactory} from './icon/component';
 import {MDCSelectEventDetail, MDCSelectFoundationMap} from './types';
 
+/** MDC Select */
 export class MDCSelect extends MDCComponent<MDCSelectFoundation> {
-  static attachTo(root: Element): MDCSelect {
+  static override attachTo(root: HTMLElement): MDCSelect {
     return new MDCSelect(root);
   }
 
-  // Root container for select (anchor) element and menu.
-  protected root_!: HTMLElement; // assigned in MDCComponent constructor
+  private ripple!: MDCRipple|null;
 
-  private ripple_!: MDCRipple | null;
+  private menu!: MDCMenu;  // assigned in menuSetup()
 
-  private menu_!: MDCMenu; // assigned in menuSetup_()
+  private selectAnchor!: HTMLElement;           // assigned in initialize()
+  private selectedText!: HTMLElement;           // assigned in initialize()
+  private hiddenInput!: HTMLInputElement|null;  // assigned in initialize()
 
-  private selectAnchor_!: HTMLElement; // assigned in initialize()
-  private selectedText_!: HTMLElement; // assigned in initialize()
+  private menuElement!: HTMLElement;              // assigned in menuSetup()
+  private menuItemValues!: string[];              // assigned in menuSetup()
+  private leadingIcon?: MDCSelectIcon;            // assigned in initialize()
+  private helperText!: MDCSelectHelperText|null;  // assigned in initialize()
+  private lineRipple!: MDCLineRipple|null;        // assigned in initialize()
+  private label!: MDCFloatingLabel|null;          // assigned in initialize()
+  private outline!: MDCNotchedOutline|null;       // assigned in initialize()
 
-  private menuElement_!: Element; // assigned in menuSetup_()
-  private leadingIcon_?: MDCSelectIcon; // assigned in initialize()
-  private helperText_!: MDCSelectHelperText | null; // assigned in initialize()
-  private lineRipple_!: MDCLineRipple | null; // assigned in initialize()
-  private label_!: MDCFloatingLabel | null; // assigned in initialize()
-  private outline_!: MDCNotchedOutline | null; // assigned in initialize()
-  private handleChange_!: SpecificEventListener<'change'>; // assigned in initialize()
-  private handleFocus_!: SpecificEventListener<'focus'>; // assigned in initialize()
-  private handleBlur_!: SpecificEventListener<'blur'>; // assigned in initialize()
-  private handleClick_!: SpecificEventListener<'click'>; // assigned in initialize()
-  private handleKeydown_!: SpecificEventListener<'keydown'>; // assigned in initialize()
-  private handleMenuOpened_!: EventListener; // assigned in initialize()
-  private handleMenuClosed_!: EventListener; // assigned in initialize()
-  private handleMenuItemAction_!: CustomEventListener<MDCMenuItemEvent>; // assigned in initialize()
+  // Event handlers
+  private handleFocus!: SpecificEventListener<'focus'>;
+  private handleBlur!: SpecificEventListener<'blur'>;
+  private handleClick!: SpecificEventListener<'click'>;
+  private handleKeydown!: SpecificEventListener<'keydown'>;
+  private handleMenuOpened!: EventListener;
+  private handleMenuClosed!: EventListener;
+  private handleMenuClosing!: EventListener;
+  private handleMenuItemAction!: CustomEventListener<MDCMenuItemEvent>;
 
-  initialize(
+  override initialize(
       labelFactory: MDCFloatingLabelFactory = (el) => new MDCFloatingLabel(el),
       lineRippleFactory: MDCLineRippleFactory = (el) => new MDCLineRipple(el),
-      outlineFactory: MDCNotchedOutlineFactory = (el) => new MDCNotchedOutline(el),
+      outlineFactory:
+          MDCNotchedOutlineFactory = (el) => new MDCNotchedOutline(el),
       menuFactory: MDCMenuFactory = (el) => new MDCMenu(el),
       iconFactory: MDCSelectIconFactory = (el) => new MDCSelectIcon(el),
-      helperTextFactory: MDCSelectHelperTextFactory = (el) => new MDCSelectHelperText(el),
+      helperTextFactory:
+          MDCSelectHelperTextFactory = (el) => new MDCSelectHelperText(el),
   ) {
-    this.selectAnchor_ = this.root_.querySelector(strings.SELECT_ANCHOR_SELECTOR) as HTMLElement;
-    this.selectedText_ = this.root_.querySelector(strings.SELECTED_TEXT_SELECTOR) as HTMLElement;
+    this.selectAnchor =
+        this.root.querySelector<HTMLElement>(strings.SELECT_ANCHOR_SELECTOR)!;
+    this.selectedText =
+        this.root.querySelector<HTMLElement>(strings.SELECTED_TEXT_SELECTOR)!;
+    this.hiddenInput = this.root.querySelector<HTMLInputElement>(
+        strings.HIDDEN_INPUT_SELECTOR)!;
 
-    if (!this.selectedText_) {
+    if (!this.selectedText) {
       throw new Error(
           'MDCSelect: Missing required element: The following selector must be present: ' +
-          `'${strings.SELECTED_TEXT_SELECTOR}'`,
+              `'${strings.SELECTED_TEXT_SELECTOR}'`,
       );
     }
 
-    if (this.selectedText_.hasAttribute(strings.ARIA_CONTROLS)) {
-      const helperTextElement = document.getElementById(this.selectedText_.getAttribute(strings.ARIA_CONTROLS)!);
+    if (this.selectAnchor.hasAttribute(strings.ARIA_CONTROLS)) {
+      const helperTextElement = document.getElementById(
+          this.selectAnchor.getAttribute(strings.ARIA_CONTROLS)!);
       if (helperTextElement) {
-        this.helperText_ = helperTextFactory(helperTextElement);
+        this.helperText = helperTextFactory(helperTextElement);
       }
     }
 
-    this.menuSetup_(menuFactory);
+    this.menuSetup(menuFactory);
 
-    const labelElement = this.root_.querySelector(strings.LABEL_SELECTOR);
-    this.label_ = labelElement ? labelFactory(labelElement) : null;
+    const labelElement =
+        this.root.querySelector<HTMLElement>(strings.LABEL_SELECTOR);
+    this.label = labelElement ? labelFactory(labelElement) : null;
 
-    const lineRippleElement = this.root_.querySelector(strings.LINE_RIPPLE_SELECTOR);
-    this.lineRipple_ = lineRippleElement ? lineRippleFactory(lineRippleElement) : null;
+    const lineRippleElement =
+        this.root.querySelector<HTMLElement>(strings.LINE_RIPPLE_SELECTOR);
+    this.lineRipple =
+        lineRippleElement ? lineRippleFactory(lineRippleElement) : null;
 
-    const outlineElement = this.root_.querySelector(strings.OUTLINE_SELECTOR);
-    this.outline_ = outlineElement ? outlineFactory(outlineElement) : null;
+    const outlineElement =
+        this.root.querySelector<HTMLElement>(strings.OUTLINE_SELECTOR);
+    this.outline = outlineElement ? outlineFactory(outlineElement) : null;
 
-    const leadingIcon = this.root_.querySelector(strings.LEADING_ICON_SELECTOR);
+    const leadingIcon =
+        this.root.querySelector<HTMLElement>(strings.LEADING_ICON_SELECTOR);
     if (leadingIcon) {
-      this.leadingIcon_ = iconFactory(leadingIcon);
+      this.leadingIcon = iconFactory(leadingIcon);
     }
 
-    if (!this.root_.classList.contains(cssClasses.OUTLINED)) {
-      this.ripple_ = this.createRipple_();
+    if (!this.root.classList.contains(cssClasses.OUTLINED)) {
+      this.ripple = this.createRipple();
     }
   }
 
@@ -120,258 +135,410 @@ export class MDCSelect extends MDCComponent<MDCSelectFoundation> {
    * Initializes the select's event listeners and internal state based
    * on the environment's state.
    */
-  initialSyncWithDOM() {
-    this.handleChange_ = () => this.foundation_.handleChange();
-    this.handleFocus_ = () => this.foundation_.handleFocus();
-    this.handleBlur_ = () => this.foundation_.handleBlur();
-    this.handleClick_ = (evt) => {
-      this.selectedText_.focus();
-      this.foundation_.handleClick(this.getNormalizedXCoordinate_(evt));
+  override initialSyncWithDOM() {
+    this.handleFocus = () => {
+      this.foundation.handleFocus();
     };
-    this.handleKeydown_ = (evt) => this.foundation_.handleKeydown(evt);
-    this.handleMenuItemAction_ = (evt) => this.foundation_.handleMenuItemAction(evt.detail.index);
-    this.handleMenuOpened_ = () => this.foundation_.handleMenuOpened();
-    this.handleMenuClosed_ = () => this.foundation_.handleMenuClosed();
+    this.handleBlur = () => {
+      this.foundation.handleBlur();
+    };
+    this.handleClick = (event) => {
+      this.selectAnchor.focus();
+      this.foundation.handleClick(this.getNormalizedXCoordinate(event));
+    };
+    this.handleKeydown = (event) => {
+      this.foundation.handleKeydown(event);
+    };
+    this.handleMenuItemAction = (event) => {
+      this.foundation.handleMenuItemAction(event.detail.index);
+    };
+    this.handleMenuOpened = () => {
+      this.foundation.handleMenuOpened();
+    };
+    this.handleMenuClosed = () => {
+      this.foundation.handleMenuClosed();
+    };
+    this.handleMenuClosing = () => {
+      this.foundation.handleMenuClosing();
+    };
 
-    this.selectedText_.addEventListener('focus', this.handleFocus_);
-    this.selectedText_.addEventListener('blur', this.handleBlur_);
+    this.selectAnchor.addEventListener('focus', this.handleFocus);
+    this.selectAnchor.addEventListener('blur', this.handleBlur);
 
-    this.selectedText_.addEventListener('click', this.handleClick_ as EventListener);
+    this.selectAnchor.addEventListener(
+        'click', this.handleClick as EventListener);
 
-    this.selectedText_!.addEventListener('keydown', this.handleKeydown_);
-    this.menu_!.listen(menuSurfaceConstants.strings.CLOSED_EVENT, this.handleMenuClosed_);
-    this.menu_!.listen(menuSurfaceConstants.strings.OPENED_EVENT, this.handleMenuOpened_);
-    this.menu_!.listen(menuConstants.strings.SELECTED_EVENT, this.handleMenuItemAction_);
-    this.foundation_.init();
+    this.selectAnchor.addEventListener('keydown', this.handleKeydown);
+    this.menu.listen(
+        menuSurfaceConstants.strings.CLOSED_EVENT, this.handleMenuClosed);
+    this.menu.listen(
+        menuSurfaceConstants.strings.CLOSING_EVENT, this.handleMenuClosing);
+    this.menu.listen(
+        menuSurfaceConstants.strings.OPENED_EVENT, this.handleMenuOpened);
+    this.menu.listen(
+        menuConstants.strings.SELECTED_EVENT, this.handleMenuItemAction);
 
-    // Sets disabled state in foundation
-    this.disabled = this.root_.classList.contains(cssClasses.DISABLED);
+    if (this.hiddenInput) {
+      if (this.hiddenInput.value) {
+        // If the hidden input already has a value, use it to restore the
+        // select's value. This can happen e.g. if the user goes back or (in
+        // some browsers) refreshes the page.
+        this.foundation.setValue(
+            this.hiddenInput.value, /** skipNotify */ true);
+        this.foundation.layout();
+        return;
+      }
+
+      this.hiddenInput.value = this.value;
+    }
   }
 
-  destroy() {
-    this.selectedText_.removeEventListener('change', this.handleChange_);
-    this.selectedText_.removeEventListener('focus', this.handleFocus_);
-    this.selectedText_.removeEventListener('blur', this.handleBlur_);
-    this.selectedText_.removeEventListener('keydown', this.handleKeydown_);
-    this.selectedText_.removeEventListener('click', this.handleClick_ as EventListener);
+  override destroy() {
+    this.selectAnchor.removeEventListener('focus', this.handleFocus);
+    this.selectAnchor.removeEventListener('blur', this.handleBlur);
+    this.selectAnchor.removeEventListener('keydown', this.handleKeydown);
+    this.selectAnchor.removeEventListener(
+        'click', this.handleClick as EventListener);
 
-    this.menu_.unlisten(menuSurfaceConstants.strings.CLOSED_EVENT, this.handleMenuClosed_);
-    this.menu_.unlisten(menuSurfaceConstants.strings.OPENED_EVENT, this.handleMenuOpened_);
-    this.menu_.unlisten(menuConstants.strings.SELECTED_EVENT, this.handleMenuItemAction_);
-    this.menu_.destroy();
+    this.menu.unlisten(
+        menuSurfaceConstants.strings.CLOSED_EVENT, this.handleMenuClosed);
+    this.menu.unlisten(
+        menuSurfaceConstants.strings.OPENED_EVENT, this.handleMenuOpened);
+    this.menu.unlisten(
+        menuConstants.strings.SELECTED_EVENT, this.handleMenuItemAction);
+    this.menu.destroy();
 
-    if (this.ripple_) {
-      this.ripple_.destroy();
+    if (this.ripple) {
+      this.ripple.destroy();
     }
-    if (this.outline_) {
-      this.outline_.destroy();
+    if (this.outline) {
+      this.outline.destroy();
     }
-    if (this.leadingIcon_) {
-      this.leadingIcon_.destroy();
+    if (this.leadingIcon) {
+      this.leadingIcon.destroy();
     }
-    if (this.helperText_) {
-      this.helperText_.destroy();
+    if (this.helperText) {
+      this.helperText.destroy();
     }
 
     super.destroy();
   }
 
   get value(): string {
-    return this.foundation_.getValue();
+    return this.foundation.getValue();
   }
 
   set value(value: string) {
-    this.foundation_.setValue(value);
+    this.foundation.setValue(value);
+  }
+
+  setValue(value: string, skipNotify = false) {
+    this.foundation.setValue(value, skipNotify);
   }
 
   get selectedIndex(): number {
-    return this.foundation_.getSelectedIndex();
+    return this.foundation.getSelectedIndex();
   }
 
   set selectedIndex(selectedIndex: number) {
-    this.foundation_.setSelectedIndex(selectedIndex, /** closeMenu */ true);
+    this.foundation.setSelectedIndex(selectedIndex, /* closeMenu */ true);
+  }
+
+  setSelectedIndex(selectedIndex: number, skipNotify = false) {
+    this.foundation.setSelectedIndex(
+        selectedIndex, /* closeMenu */ true, skipNotify);
   }
 
   get disabled(): boolean {
-    return this.foundation_.getDisabled();
+    return this.foundation.getDisabled();
   }
 
   set disabled(disabled: boolean) {
-    this.foundation_.setDisabled(disabled);
+    this.foundation.setDisabled(disabled);
+    if (this.hiddenInput) {
+      this.hiddenInput.disabled = disabled;
+    }
   }
 
   set leadingIconAriaLabel(label: string) {
-    this.foundation_.setLeadingIconAriaLabel(label);
+    this.foundation.setLeadingIconAriaLabel(label);
   }
 
   /**
    * Sets the text content of the leading icon.
    */
   set leadingIconContent(content: string) {
-    this.foundation_.setLeadingIconContent(content);
+    this.foundation.setLeadingIconContent(content);
   }
 
   /**
    * Sets the text content of the helper text.
    */
   set helperTextContent(content: string) {
-    this.foundation_.setHelperTextContent(content);
+    this.foundation.setHelperTextContent(content);
+  }
+
+  /**
+   * Enables or disables the default validation scheme where a required select
+   * must be non-empty. Set to false for custom validation.
+   * @param useDefaultValidation Set this to false to ignore default
+   *     validation scheme.
+   */
+  set useDefaultValidation(useDefaultValidation: boolean) {
+    this.foundation.setUseDefaultValidation(useDefaultValidation);
   }
 
   /**
    * Sets the current invalid state of the select.
    */
   set valid(isValid: boolean) {
-    this.foundation_.setValid(isValid);
+    this.foundation.setValid(isValid);
   }
 
   /**
    * Checks if the select is in a valid state.
    */
   get valid(): boolean {
-    return this.foundation_.isValid();
+    return this.foundation.isValid();
   }
 
   /**
    * Sets the control to the required state.
    */
   set required(isRequired: boolean) {
-    this.foundation_.setRequired(isRequired);
+    this.foundation.setRequired(isRequired);
   }
 
   /**
    * Returns whether the select is required.
    */
   get required(): boolean {
-    return this.foundation_.getRequired();
+    return this.foundation.getRequired();
   }
 
   /**
-   * Recomputes the outline SVG path for the outline element.
+   * Re-calculates if the notched outline should be notched and if the label
+   * should float.
    */
   layout() {
-    this.foundation_.layout();
+    this.foundation.layout();
   }
 
-  getDefaultFoundation() {
-    // DO NOT INLINE this variable. For backward compatibility, foundations take a Partial<MDCFooAdapter>.
-    // To ensure we don't accidentally omit any methods, we need a separate, strongly typed adapter variable.
+  /**
+   * Synchronizes the list of options with the state of the foundation. Call
+   * this whenever menu options are dynamically updated.
+   */
+  layoutOptions() {
+    this.foundation.layoutOptions();
+    this.menu.layout();
+    // Update cached menuItemValues for adapter.
+    this.menuItemValues =
+        this.menu.items.map((el) => el.getAttribute(strings.VALUE_ATTR) || '');
+
+    if (this.hiddenInput) {
+      this.hiddenInput.value = this.value;
+    }
+  }
+
+  override getDefaultFoundation() {
+    // DO NOT INLINE this variable. For backward compatibility, foundations take
+    // a Partial<MDCFooAdapter>. To ensure we don't accidentally omit any
+    // methods, we need a separate, strongly typed adapter variable.
     const adapter: MDCSelectAdapter = {
-      ...this.getSelectAdapterMethods_(),
-      ...this.getCommonAdapterMethods_(),
-      ...this.getOutlineAdapterMethods_(),
-      ...this.getLabelAdapterMethods_(),
+      ...this.getSelectAdapterMethods(),
+      ...this.getCommonAdapterMethods(),
+      ...this.getOutlineAdapterMethods(),
+      ...this.getLabelAdapterMethods(),
     };
-    return new MDCSelectFoundation(adapter, this.getFoundationMap_());
+    return new MDCSelectFoundation(adapter, this.getFoundationMap());
   }
 
   /**
    * Handles setup for the menu.
    */
-  private menuSetup_(menuFactory: MDCMenuFactory) {
-    this.menuElement_ = this.root_.querySelector(strings.MENU_SELECTOR)!;
-    this.menu_ = menuFactory(this.menuElement_);
+  private menuSetup(menuFactory: MDCMenuFactory) {
+    this.menuElement =
+        this.root.querySelector<HTMLElement>(strings.MENU_SELECTOR)!;
+    this.menu = menuFactory(this.menuElement);
+    this.menu.hasTypeahead = true;
+    this.menu.singleSelection = true;
+    this.menuItemValues =
+        this.menu.items.map((el) => el.getAttribute(strings.VALUE_ATTR) || '');
   }
 
-  private createRipple_(): MDCRipple {
-    // DO NOT INLINE this variable. For backward compatibility, foundations take a Partial<MDCFooAdapter>.
-    // To ensure we don't accidentally omit any methods, we need a separate, strongly typed adapter variable.
+  private createRipple(): MDCRipple {
+    // DO NOT INLINE this variable. For backward compatibility, foundations take
+    // a Partial<MDCFooAdapter>. To ensure we don't accidentally omit any
+    // methods, we need a separate, strongly typed adapter variable.
     // tslint:disable:object-literal-sort-keys Methods should be in the same order as the adapter interface.
     const adapter: MDCRippleAdapter = {
-      ...MDCRipple.createAdapter({root_: this.selectAnchor_}),
-      registerInteractionHandler: (evtType, handler) => this.selectedText_.addEventListener(evtType, handler),
-      deregisterInteractionHandler: (evtType, handler) => this.selectedText_.removeEventListener(evtType, handler),
+      ...MDCRipple.createAdapter({root: this.selectAnchor}),
+      registerInteractionHandler: (eventType, handler) => {
+        this.selectAnchor.addEventListener(eventType, handler);
+      },
+      deregisterInteractionHandler: (eventType, handler) => {
+        this.selectAnchor.removeEventListener(eventType, handler);
+      },
     };
     // tslint:enable:object-literal-sort-keys
-    return new MDCRipple(this.selectAnchor_, new MDCRippleFoundation(adapter));
+    return new MDCRipple(this.selectAnchor, new MDCRippleFoundation(adapter));
   }
 
-  private getSelectAdapterMethods_() {
+  private getSelectAdapterMethods() {
     // tslint:disable:object-literal-sort-keys Methods should be in the same order as the adapter interface.
     return {
-      getSelectedMenuItem: () => this.menuElement_!.querySelector(strings.SELECTED_ITEM_SELECTOR),
-      getMenuItemAttr: (menuItem: Element, attr: string) => menuItem.getAttribute(attr),
-      setSelectedText: (text: string) => this.selectedText_.textContent = text,
-      isSelectedTextFocused: () => document.activeElement === this.selectedText_,
-      getSelectedTextAttr: (attr: string) => this.selectedText_.getAttribute(attr),
-      setSelectedTextAttr: (attr: string, value: string) => this.selectedText_.setAttribute(attr, value),
-      openMenu: () => this.menu_.open = true,
-      closeMenu: () => this.menu_.open = false,
-      getAnchorElement: () => this.root_.querySelector(strings.SELECT_ANCHOR_SELECTOR)!,
-      setMenuAnchorElement: (anchorEl: HTMLElement) => this.menu_.setAnchorElement(anchorEl),
-      setMenuAnchorCorner: (anchorCorner: menuSurfaceConstants.Corner) => this.menu_.setAnchorCorner(anchorCorner),
-      setMenuWrapFocus: (wrapFocus: boolean) => this.menu_.wrapFocus = wrapFocus,
-      setAttributeAtIndex: (index: number, attributeName: string, attributeValue: string) =>
-        this.menu_.items[index].setAttribute(attributeName, attributeValue),
-      removeAttributeAtIndex: (index: number, attributeName: string) =>
-        this.menu_.items[index].removeAttribute(attributeName),
-      focusMenuItemAtIndex: (index: number) => (this.menu_.items[index] as HTMLElement).focus(),
-      getMenuItemCount: () => this.menu_.items.length,
-      getMenuItemValues: () => this.menu_.items.map((el) => el.getAttribute(strings.VALUE_ATTR) || ''),
-      getMenuItemTextAtIndex: (index: number) => this.menu_.items[index].textContent as string,
-      addClassAtIndex: (index: number, className: string) => this.menu_.items[index].classList.add(className),
-      removeClassAtIndex: (index: number, className: string) => this.menu_.items[index].classList.remove(className),
+      getMenuItemAttr: (menuItem: Element, attr: string) =>
+          menuItem.getAttribute(attr),
+      setSelectedText: (text: string) => {
+        this.selectedText.textContent = text;
+
+        let index = this.menu.selectedIndex;
+        if (index === -1) return;
+        index = index instanceof Array ? index[0] : index;
+        const selectedItem = this.menu.items[index];
+        if (!selectedItem) return;
+        this.selectedText.setAttribute(
+            'aria-label', selectedItem.getAttribute('aria-label') || '');
+      },
+      isSelectAnchorFocused: () => document.activeElement === this.selectAnchor,
+      getSelectAnchorAttr: (attr: string) =>
+          this.selectAnchor.getAttribute(attr),
+      setSelectAnchorAttr: (attr: string, value: string) => {
+        this.safeSetAttribute(this.selectAnchor, attr, value);
+      },
+      removeSelectAnchorAttr: (attr: string) => {
+        this.selectAnchor.removeAttribute(attr);
+      },
+      addMenuClass: (className: string) => {
+        this.menuElement.classList.add(className);
+      },
+      removeMenuClass: (className: string) => {
+        this.menuElement.classList.remove(className);
+      },
+      openMenu: () => {
+        this.menu.open = true;
+      },
+      closeMenu: () => {
+        this.menu.open = false;
+      },
+      getAnchorElement: () =>
+          this.root.querySelector<HTMLElement>(strings.SELECT_ANCHOR_SELECTOR)!,
+      setMenuAnchorElement: (anchorEl: HTMLElement) => {
+        this.menu.setAnchorElement(anchorEl);
+      },
+      setMenuAnchorCorner: (anchorCorner: menuSurfaceConstants.Corner) => {
+        this.menu.setAnchorCorner(anchorCorner);
+      },
+      setMenuWrapFocus: (wrapFocus: boolean) => {
+        this.menu.wrapFocus = wrapFocus;
+      },
+      getSelectedIndex: () => {
+        const index = this.menu.selectedIndex;
+        return index instanceof Array ? index[0] : index;
+      },
+      setSelectedIndex: (index: number) => {
+        this.menu.selectedIndex = index;
+      },
+      focusMenuItemAtIndex: (index: number) => {
+        this.menu.items[index]?.focus();
+      },
+      getMenuItemCount: () => this.menu.items.length,
+      // Cache menu item values. layoutOptions() updates this cache.
+      getMenuItemValues: () => this.menuItemValues,
+      getMenuItemTextAtIndex: (index: number) =>
+          this.menu.getPrimaryTextAtIndex(index),
+      isTypeaheadInProgress: () => this.menu.typeaheadInProgress,
+      typeaheadMatchItem: (nextChar: string, startingIndex: number) =>
+          this.menu.typeaheadMatchItem(nextChar, startingIndex),
     };
     // tslint:enable:object-literal-sort-keys
   }
 
-  private getCommonAdapterMethods_() {
+  private getCommonAdapterMethods() {
     // tslint:disable:object-literal-sort-keys Methods should be in the same order as the adapter interface.
     return {
-      addClass: (className: string) => this.root_.classList.add(className),
-      removeClass: (className: string) => this.root_.classList.remove(className),
-      hasClass: (className: string) => this.root_.classList.contains(className),
-      setRippleCenter: (normalizedX: number) => this.lineRipple_ && this.lineRipple_.setRippleCenter(normalizedX),
-      activateBottomLine: () => this.lineRipple_ && this.lineRipple_.activate(),
-      deactivateBottomLine: () => this.lineRipple_ && this.lineRipple_.deactivate(),
+      addClass: (className: string) => {
+        this.root.classList.add(className);
+      },
+      removeClass: (className: string) => {
+        this.root.classList.remove(className);
+      },
+      hasClass: (className: string) => this.root.classList.contains(className),
+      setRippleCenter: (normalizedX: number) => {
+        this.lineRipple && this.lineRipple.setRippleCenter(normalizedX);
+      },
+      activateBottomLine: () => {
+        this.lineRipple && this.lineRipple.activate();
+      },
+      deactivateBottomLine: () => {
+        this.lineRipple && this.lineRipple.deactivate();
+      },
       notifyChange: (value: string) => {
+        if (this.hiddenInput) {
+          this.hiddenInput.value = value;
+        }
+
         const index = this.selectedIndex;
-        this.emit<MDCSelectEventDetail>(strings.CHANGE_EVENT, {value, index}, true /* shouldBubble  */);
+        this.emit<MDCSelectEventDetail>(
+            strings.CHANGE_EVENT, {value, index}, true /* shouldBubble  */);
       },
     };
     // tslint:enable:object-literal-sort-keys
   }
 
-  private getOutlineAdapterMethods_() {
+  private getOutlineAdapterMethods() {
     // tslint:disable:object-literal-sort-keys Methods should be in the same order as the adapter interface.
     return {
-      hasOutline: () => Boolean(this.outline_),
-      notchOutline: (labelWidth: number) => this.outline_ && this.outline_.notch(labelWidth),
-      closeOutline: () => this.outline_ && this.outline_.closeNotch(),
+      hasOutline: () => Boolean(this.outline),
+      notchOutline: (labelWidth: number) => {
+        this.outline && this.outline.notch(labelWidth);
+      },
+      closeOutline: () => {
+        this.outline && this.outline.closeNotch();
+      },
     };
     // tslint:enable:object-literal-sort-keys
   }
 
-  private getLabelAdapterMethods_() {
+  private getLabelAdapterMethods() {
     // tslint:disable:object-literal-sort-keys Methods should be in the same order as the adapter interface.
     return {
-      hasLabel: () => !!this.label_,
-      floatLabel: (shouldFloat: boolean) => this.label_ && this.label_.float(shouldFloat),
-      getLabelWidth: () => this.label_ ? this.label_.getWidth() : 0,
+      hasLabel: () => !!this.label,
+      floatLabel: (shouldFloat: boolean) => {
+        this.label && this.label.float(shouldFloat);
+      },
+      getLabelWidth: () => this.label ? this.label.getWidth() : 0,
+      setLabelRequired: (isRequired: boolean) => {
+        this.label && this.label.setRequired(isRequired);
+      },
     };
     // tslint:enable:object-literal-sort-keys
   }
 
   /**
-   * Calculates where the line ripple should start based on the x coordinate within the component.
+   * Calculates where the line ripple should start based on the x coordinate
+   * within the component.
    */
-  private getNormalizedXCoordinate_(evt: MouseEvent | TouchEvent): number {
-    const targetClientRect = (evt.target as Element).getBoundingClientRect();
-    const xCoordinate = this.isTouchEvent_(evt) ? evt.touches[0].clientX : evt.clientX;
+  private getNormalizedXCoordinate(event: MouseEvent|TouchEvent): number {
+    const targetClientRect = (event.target as Element).getBoundingClientRect();
+    const xCoordinate =
+        this.isTouchEvent(event) ? event.touches[0].clientX : event.clientX;
     return xCoordinate - targetClientRect.left;
   }
 
-  private isTouchEvent_(evt: MouseEvent | TouchEvent): evt is TouchEvent {
-    return Boolean((evt as TouchEvent).touches);
+  private isTouchEvent(event: MouseEvent|TouchEvent): event is TouchEvent {
+    return Boolean((event as TouchEvent).touches);
   }
 
   /**
    * Returns a map of all subcomponents to subfoundations.
    */
-  private getFoundationMap_(): Partial<MDCSelectFoundationMap> {
+  private getFoundationMap(): Partial<MDCSelectFoundationMap> {
     return {
-      helperText: this.helperText_ ? this.helperText_.foundation : undefined,
-      leadingIcon: this.leadingIcon_ ? this.leadingIcon_.foundation : undefined,
+      helperText: this.helperText ? this.helperText.foundationForSelect :
+                                    undefined,
+      leadingIcon: this.leadingIcon ? this.leadingIcon.foundationForSelect :
+                                      undefined,
     };
   }
 }

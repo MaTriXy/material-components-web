@@ -23,12 +23,13 @@
 
 
 import {verifyDefaultAdapter} from '../../../../testing/helpers/foundation';
-import {setUpFoundationTest} from '../../../../testing/helpers/setup';
+import {setUpFoundationTest, setUpMdcTestEnvironment} from '../../../../testing/helpers/setup';
 import {MDCTextFieldHelperTextFoundation} from '../../../mdc-textfield/helper-text/foundation';
 
-const {cssClasses} = MDCTextFieldHelperTextFoundation;
+const {cssClasses, strings} = MDCTextFieldHelperTextFoundation;
 
 describe('MDCTextFieldHelperTextFoundation', () => {
+  setUpMdcTestEnvironment();
   it('exports cssClasses', () => {
     expect('cssClasses' in MDCTextFieldHelperTextFoundation).toBeTruthy();
   });
@@ -42,6 +43,7 @@ describe('MDCTextFieldHelperTextFoundation', () => {
       'addClass',
       'removeClass',
       'hasClass',
+      'getAttr',
       'setAttr',
       'removeAttr',
       'setContent',
@@ -56,6 +58,50 @@ describe('MDCTextFieldHelperTextFoundation', () => {
 
   it('istanbul code coverage', () => {
     expect(() => new MDCTextFieldHelperTextFoundation).not.toThrow();
+  });
+
+  it('#getId retrieves ID', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getAttr.and.returnValue('bar');
+
+    expect(foundation.getId()).toEqual('bar');
+  });
+
+  it('#isPersistent retrieves correct value', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_PERSISTENT)
+        .and.returnValue(true);
+
+    expect(foundation.isPersistent()).toEqual(true);
+
+    mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_PERSISTENT)
+        .and.returnValue(false);
+
+    expect(foundation.isPersistent()).toEqual(false);
+  });
+
+  it('#isValidation retrieves correct value', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_VALIDATION_MSG)
+        .and.returnValue(true);
+
+    expect(foundation.isValidation()).toEqual(true);
+
+    mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_VALIDATION_MSG)
+        .and.returnValue(false);
+
+    expect(foundation.isValidation()).toEqual(false);
+  });
+
+  it('#isVisible retrieves correct value', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getAttr.withArgs(strings.ARIA_HIDDEN).and.returnValue('true');
+
+    expect(foundation.isVisible()).toEqual(false);
+
+    mockAdapter.getAttr.withArgs(strings.ARIA_HIDDEN).and.returnValue('false');
+
+    expect(foundation.isVisible()).toEqual(true);
   });
 
   it('#setContent sets the content of the helper text element', () => {
@@ -101,6 +147,27 @@ describe('MDCTextFieldHelperTextFoundation', () => {
            .and.returnValue(true);
        foundation.setValidity(inputIsValid);
        expect(mockAdapter.setAttr).toHaveBeenCalledWith('role', 'alert');
+     });
+
+  it('#setValidity invalid when already invalid refreshes role="alert" if ' +
+         'helper text is being used as a validation message',
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       const inputIsValid = false;
+       mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_PERSISTENT)
+           .and.returnValue(false);
+       mockAdapter.hasClass.withArgs(cssClasses.HELPER_TEXT_VALIDATION_MSG)
+           .and.returnValue(true);
+       mockAdapter.getAttr.withArgs(strings.ROLE).and.returnValue('alert');
+       foundation.setValidity(inputIsValid);
+
+       mockAdapter.setAttr.calls.reset();
+       mockAdapter.removeAttr.calls.reset();
+
+       foundation.setValidity(inputIsValid);
+       jasmine.clock().tick(1);
+       expect(mockAdapter.removeAttr).toHaveBeenCalledWith(strings.ROLE);
+       expect(mockAdapter.setAttr).toHaveBeenCalledWith(strings.ROLE, 'alert');
      });
 
   it('#setValidity removes role="alert" if input is valid', () => {

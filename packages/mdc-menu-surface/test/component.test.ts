@@ -21,40 +21,35 @@
  * THE SOFTWARE.
  */
 
+import {getCorrectPropertyName} from '@material/animation/util';
+
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 import {createMockFoundation} from '../../../testing/helpers/foundation';
 import {Corner, cssClasses, strings} from '../constants';
 import {MDCMenuSurface, MDCMenuSurfaceFoundation} from '../index';
-import {getTransformPropertyName} from '../util';
 
 function getFixture(open = false, fixedPosition = false) {
   const openClass = open ? 'mdc-menu-surface--open' : '';
   const fixedClass = fixedPosition ? 'mdc-menu-surface--fixed' : '';
 
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  return createFixture(html`
     <div class="mdc-menu-surface ${openClass} ${fixedClass}" tabindex="-1">
-      <ul class="mdc-list" role="menu">
-        <li class="mdc-list-item" role="menuitem" tabindex="0">Item</a>
+      <ul class="mdc-deprecated-list" role="menu">
+        <li class="mdc-deprecated-list-item" role="menuitem" tabindex="0">Item</a>
         <li role="separator"></li>
-        <li class="mdc-list-item" role="menuitem" tabindex="0">Another Item</a>
+        <li class="mdc-deprecated-list-item" role="menuitem" tabindex="0">Another Item</a>
       </nav>
     </div>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+  `);
 }
 
 function getAnchorFixture(menuFixture: HTMLElement) {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  const anchorEl = createFixture(html`
     <div class="mdc-menu-surface--anchor">
       <button class="mdc-button">Open</button>
     </div>
-  `;
-  const anchorEl = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(anchorEl);
+  `);
 
   anchorEl.appendChild(menuFixture);
   return anchorEl;
@@ -107,6 +102,34 @@ describe('MDCMenuSurface', () => {
     expect(mockFoundation.open).toHaveBeenCalled();
   });
 
+  it('#open calling open on button click does not close quick menu', () => {
+    const {root} = setupTest();
+    // not using mock as this case fails on integration rather than unit
+    const component = new MDCMenuSurface(root);
+    const button = document.createElement('button');
+    const listener = () => {
+      component.open();
+    };
+    let numTimesClosedCalled = 0;
+
+    button.addEventListener('click', listener);
+    root.addEventListener(strings.CLOSED_EVENT, () => {
+      numTimesClosedCalled += 1;
+    });
+    component.quickOpen = true;
+    document.body.appendChild(button);
+
+
+    expect(numTimesClosedCalled).toEqual(0);
+    emitEvent(button, 'click', {bubbles: true});
+    document.body.removeChild(button);
+
+    expect(component.isOpen()).toEqual(true);
+    expect(numTimesClosedCalled).toEqual(0);
+
+    component.destroy();
+  });
+
   it(`${strings.OPENED_EVENT} causes the body click handler to be registered`,
      () => {
        const {root, mockFoundation} = setupTest();
@@ -140,6 +163,7 @@ describe('MDCMenuSurface', () => {
   it(`${strings.CLOSED_EVENT} causes the body click handler to be deregistered`,
      () => {
        const {root, mockFoundation} = setupTest();
+       emitEvent(root, strings.OPENED_EVENT);
        emitEvent(root, strings.CLOSED_EVENT);
        emitEvent(document.body, 'click');
        expect(mockFoundation.handleBodyClick)
@@ -173,14 +197,14 @@ describe('MDCMenuSurface', () => {
   it('setFixedPosition is true', () => {
     const {root, component, mockFoundation} = setupTest();
     component.setFixedPosition(true);
-    expect(root.classList.contains(cssClasses.FIXED)).toBe(true);
+    expect(root).toHaveClass(cssClasses.FIXED);
     expect(mockFoundation.setFixedPosition).toHaveBeenCalledWith(true);
   });
 
   it('setFixedPosition is false', () => {
     const {root, component, mockFoundation} = setupTest();
     component.setFixedPosition(false);
-    expect(root.classList.contains(cssClasses.FIXED)).toBe(false);
+    expect(root).not.toHaveClass(cssClasses.FIXED);
     expect(mockFoundation.setFixedPosition).toHaveBeenCalledWith(false);
   });
 
@@ -220,31 +244,29 @@ describe('MDCMenuSurface', () => {
 
   it('adapter#addClass adds a class to the root element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('adapter#removeClass removes a class from the root element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('adapter#hasClass returns true if the root element has specified class',
      () => {
        const {root, component} = setupTest();
        root.classList.add('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
+       expect((component.getDefaultFoundation() as any).adapter.hasClass('foo'))
            .toBe(true);
      });
 
   it('adapter#hasClass returns false if the root element does not have specified class',
      () => {
        const {component} = setupTest();
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
+       expect((component.getDefaultFoundation() as any).adapter.hasClass('foo'))
            .toBe(false);
      });
 
@@ -252,11 +274,11 @@ describe('MDCMenuSurface', () => {
      () => {
        const {root, component} = setupTest();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getInnerDimensions()
+                  .adapter.getInnerDimensions()
                   .width)
            .toEqual(root.offsetWidth);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getInnerDimensions()
+                  .adapter.getInnerDimensions()
                   .height)
            .toEqual(root.offsetHeight);
      });
@@ -266,7 +288,16 @@ describe('MDCMenuSurface', () => {
        const {root, component} = setupTest();
        const handler = jasmine.createSpy('notifyClose handler');
        root.addEventListener(strings.CLOSED_EVENT, handler);
-       (component.getDefaultFoundation() as any).adapter_.notifyClose();
+       (component.getDefaultFoundation() as any).adapter.notifyClose();
+       expect(handler).toHaveBeenCalled();
+     });
+
+  it(`adapter#notifyClosing fires an ${strings.CLOSING_EVENT} custom event`,
+     () => {
+       const {root, component} = setupTest();
+       const handler = jasmine.createSpy('notifyClosing handler');
+       root.addEventListener(strings.CLOSING_EVENT, handler);
+       (component.getDefaultFoundation() as any).adapter.notifyClosing();
        expect(handler).toHaveBeenCalled();
      });
 
@@ -274,9 +305,18 @@ describe('MDCMenuSurface', () => {
     const {root, component} = setupTest();
     const handler = jasmine.createSpy('notifyOpen handler');
     root.addEventListener(strings.OPENED_EVENT, handler);
-    (component.getDefaultFoundation() as any).adapter_.notifyOpen();
+    (component.getDefaultFoundation() as any).adapter.notifyOpen();
     expect(handler).toHaveBeenCalled();
   });
+
+  it(`adapter#notifyOpening fires an ${strings.OPENING_EVENT} custom event`,
+     () => {
+       const {root, component} = setupTest();
+       const handler = jasmine.createSpy('notifyOpening handler');
+       root.addEventListener(strings.OPENING_EVENT, handler);
+       (component.getDefaultFoundation() as any).adapter.notifyOpening();
+       expect(handler).toHaveBeenCalled();
+     });
 
   it('adapter#restoreFocus restores focus saved by adapter#saveFocus', () => {
     const {root, component} = setupTest({open: true});
@@ -284,9 +324,9 @@ describe('MDCMenuSurface', () => {
     document.body.appendChild(button);
     document.body.appendChild(root);
     button.focus();
-    (component.getDefaultFoundation() as any).adapter_.saveFocus();
+    (component.getDefaultFoundation() as any).adapter.saveFocus();
     root.focus();
-    (component.getDefaultFoundation() as any).adapter_.restoreFocus();
+    (component.getDefaultFoundation() as any).adapter.restoreFocus();
     expect(document.activeElement).toEqual(button);
     document.body.removeChild(button);
     document.body.removeChild(root);
@@ -300,7 +340,7 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(root);
        button.focus();
        root.focus();
-       (component.getDefaultFoundation() as any).adapter_.restoreFocus();
+       (component.getDefaultFoundation() as any).adapter.restoreFocus();
        expect(document.activeElement).toEqual(root);
        document.body.removeChild(button);
        document.body.removeChild(root);
@@ -313,7 +353,7 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(button);
        document.body.appendChild(root);
        button.focus();
-       (component.getDefaultFoundation() as any).adapter_.restoreFocus();
+       (component.getDefaultFoundation() as any).adapter.restoreFocus();
        expect(document.activeElement).toEqual(button);
        document.body.removeChild(button);
        document.body.removeChild(root);
@@ -323,7 +363,7 @@ describe('MDCMenuSurface', () => {
     const {root, component} = setupTest({open: true});
     document.body.appendChild(root);
     root.focus();
-    expect((component.getDefaultFoundation() as any).adapter_.isFocused())
+    expect((component.getDefaultFoundation() as any).adapter.isFocused())
         .toBe(true);
     document.body.removeChild(root);
   });
@@ -331,7 +371,7 @@ describe('MDCMenuSurface', () => {
   it('adapter#hasAnchor returns true if the menu surface has an anchor', () => {
     const {component} = setupTest({open: true, withAnchor: true});
     component.initialSyncWithDOM();
-    expect((component.getDefaultFoundation() as any).adapter_.hasAnchor())
+    expect((component.getDefaultFoundation() as any).adapter.hasAnchor())
         .toBe(true);
   });
 
@@ -340,7 +380,7 @@ describe('MDCMenuSurface', () => {
     const notAnAnchor = document.createElement('div');
     notAnAnchor.appendChild(root);
     component.initialSyncWithDOM();
-    expect((component.getDefaultFoundation() as any).adapter_.hasAnchor())
+    expect((component.getDefaultFoundation() as any).adapter.hasAnchor())
         .toBe(false);
   });
 
@@ -353,13 +393,13 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(anchor);
        component.initialSyncWithDOM();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getAnchorDimensions()
+                  .adapter.getAnchorDimensions()
                   .height)
-           .toEqual(21);
+           .toBeCloseTo(21);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getAnchorDimensions()
+                  .adapter.getAnchorDimensions()
                   .width)
-           .toEqual(42);
+           .toBeCloseTo(42);
        document.body.removeChild(anchor);
      });
 
@@ -369,34 +409,35 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(root);
        component.initialSyncWithDOM();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getAnchorDimensions())
+                  .adapter.getAnchorDimensions())
            .toBe(null);
        document.body.removeChild(root);
      });
 
-  it('adapter#getWindowDimensions returns the dimensions of the window', () => {
-    const {root, component} = setupTest({open: true});
-    document.body.appendChild(root);
-    expect((component.getDefaultFoundation() as any)
-               .adapter_.getWindowDimensions()
-               .height)
-        .toEqual(window.innerHeight);
-    expect((component.getDefaultFoundation() as any)
-               .adapter_.getWindowDimensions()
-               .width)
-        .toEqual(window.innerWidth);
-    document.body.removeChild(root);
-  });
+  it('adapter#getViewportDimensions returns the dimensions of the window',
+     () => {
+       const {root, component} = setupTest({open: true});
+       document.body.appendChild(root);
+       expect((component.getDefaultFoundation() as any)
+                  .adapter.getViewportDimensions()
+                  .height)
+           .toEqual(window.innerHeight);
+       expect((component.getDefaultFoundation() as any)
+                  .adapter.getViewportDimensions()
+                  .width)
+           .toEqual(window.innerWidth);
+       document.body.removeChild(root);
+     });
 
   it('adapter#getBodyDimensions returns the body dimensions', () => {
     const {root, component} = setupTest({open: true});
     document.body.appendChild(root);
     expect((component.getDefaultFoundation() as any)
-               .adapter_.getBodyDimensions()
+               .adapter.getBodyDimensions()
                .height)
         .toEqual(document.body.clientHeight);
     expect((component.getDefaultFoundation() as any)
-               .adapter_.getBodyDimensions()
+               .adapter.getBodyDimensions()
                .width)
         .toEqual(document.body.clientWidth);
     document.body.removeChild(root);
@@ -407,11 +448,11 @@ describe('MDCMenuSurface', () => {
        const {root, component} = setupTest({open: true});
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getWindowScroll()
+                  .adapter.getWindowScroll()
                   .x)
            .toEqual(window.pageXOffset);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getWindowScroll()
+                  .adapter.getWindowScroll()
                   .y)
            .toEqual(window.pageYOffset);
        document.body.removeChild(root);
@@ -422,7 +463,7 @@ describe('MDCMenuSurface', () => {
         {component: MDCMenuSurface, anchor: HTMLElement};
     anchor.setAttribute('dir', 'rtl');
     document.body.appendChild(anchor);
-    expect((component.getDefaultFoundation() as any).adapter_.isRtl())
+    expect((component.getDefaultFoundation() as any).adapter.isRtl())
         .toBe(true);
     document.body.removeChild(anchor);
   });
@@ -432,7 +473,7 @@ describe('MDCMenuSurface', () => {
         {component: MDCMenuSurface, anchor: HTMLElement};
     anchor.setAttribute('dir', 'ltr');
     document.body.appendChild(anchor);
-    expect((component.getDefaultFoundation() as any).adapter_.isRtl())
+    expect((component.getDefaultFoundation() as any).adapter.isRtl())
         .toBe(false);
     document.body.removeChild(anchor);
   });
@@ -441,7 +482,7 @@ describe('MDCMenuSurface', () => {
     const {component, anchor} = setupTest({open: true, withAnchor: true}) as
         {component: MDCMenuSurface, anchor: HTMLElement};
     document.body.appendChild(anchor);
-    expect((component.getDefaultFoundation() as any).adapter_.isRtl())
+    expect((component.getDefaultFoundation() as any).adapter.isRtl())
         .toBe(false);
     document.body.removeChild(anchor);
   });
@@ -456,7 +497,7 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(anchor);
 
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.isElementInContainer(button))
+                  .adapter.isElementInContainer(button))
            .toBe(true);
        document.body.removeChild(anchor);
      });
@@ -469,7 +510,7 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(anchor);
 
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.isElementInContainer(root))
+                  .adapter.isElementInContainer(root))
            .toBe(true);
        document.body.removeChild(anchor);
      });
@@ -483,7 +524,7 @@ describe('MDCMenuSurface', () => {
        document.body.appendChild(button);
 
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.isElementInContainer(button))
+                  .adapter.isElementInContainer(button))
            .toBe(false);
        document.body.removeChild(anchor);
        document.body.removeChild(button);
@@ -495,14 +536,14 @@ describe('MDCMenuSurface', () => {
        // Write expected value and read canonical value from browser.
        root.style.transformOrigin = 'left top 10px';
        const expected = root.style.getPropertyValue(
-           `${getTransformPropertyName(window)}-origin`);
+           `${getCorrectPropertyName(window, 'transform')}-origin`);
        // Reset value.
        root.style.transformOrigin = '';
 
        (component.getDefaultFoundation() as any)
-           .adapter_.setTransformOrigin('left top 10px');
+           .adapter.setTransformOrigin('left top 10px');
        expect(root.style.getPropertyValue(
-                  `${getTransformPropertyName(window)}-origin`))
+                  `${getCorrectPropertyName(window, 'transform')}-origin`))
            .toEqual(expected);
      });
 
@@ -510,11 +551,11 @@ describe('MDCMenuSurface', () => {
      () => {
        const {root, component} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setPosition({top: 10, left: 11});
+           .adapter.setPosition({top: 10, left: 11});
        expect(root.style.top).toEqual('10px');
        expect(root.style.left).toEqual('11px');
        (component.getDefaultFoundation() as any)
-           .adapter_.setPosition({bottom: 10, right: 11});
+           .adapter.setPosition({bottom: 10, right: 11});
        expect(root.style.bottom).toEqual('10px');
        expect(root.style.right).toEqual('11px');
      });
@@ -522,7 +563,31 @@ describe('MDCMenuSurface', () => {
   it('adapter#setMaxHeight sets the maxHeight style on the menu surface element',
      () => {
        const {root, component} = setupTest();
-       (component.getDefaultFoundation() as any).adapter_.setMaxHeight('100px');
+       (component.getDefaultFoundation() as any).adapter.setMaxHeight('100px');
        expect(root.style.maxHeight).toEqual('100px');
+     });
+
+  it('adapter#registerWindowEventHandler uses the handler as a window resize listener',
+     () => {
+       const {component} = setupTest();
+       const handler = jasmine.createSpy('resizeListener');
+       (component.getDefaultFoundation() as any)
+           .adapter.registerWindowEventHandler('resize', handler);
+       emitEvent(window, 'resize');
+       expect(handler).toHaveBeenCalledWith(jasmine.anything());
+       window.removeEventListener('resize', handler);
+     });
+
+  it('adapter#deregisterWindowEventHandler unlistens the handler for window resize',
+     () => {
+       const {component} = setupTest();
+       const handler = jasmine.createSpy('resizeListener');
+       window.addEventListener('resize', handler);
+       (component.getDefaultFoundation() as any)
+           .adapter.deregisterWindowEventHandler('resize', handler);
+       emitEvent(window, 'resize');
+       expect(handler).not.toHaveBeenCalledWith(jasmine.anything());
+       // Just to be safe
+       window.removeEventListener('resize', handler);
      });
 });

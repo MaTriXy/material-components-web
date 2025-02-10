@@ -60,5 +60,22 @@ The `announce` utility file contains a single helper method for announcing a mes
 
 Method Signature | Description
 --- | ---
-`announce(message: string, priority?: AnnouncerPriority) => void` | Announces the message via an `aria-live` region with the given priority (defaults to polite)
+`announce(message: string, options?: AnnouncerMessageOptions) => void` | Announces the message via an `aria-live` region with the given options. `AnnouncerMessageOptions.priority` defaults to polite and `AnnouncerMessageOptions.ownerDocument` defaults to the global document.
 <!-- TODO(b/148462294): Remove once only exported members are required in docs `say()` --> <!-- | --> <!-- DO NOT USE -->
+
+## Keyboard
+
+The `keyboard` utility provides helper methods for normalizing `KeyboardEvent` keys across browsers. It is intended for usage from MDC-internal components.
+
+Method Signature | Description
+--- | ---
+`normalizeKey(event: KeyboardEvent) => string` | Returns a normalized string derived from `KeyboardEvent`'s `keyCode` property to be standard across browsers.
+`isNavigationEvent(event: KeyboardEvent) => boolean` | Returns `true` if the event is a navigation event (Page Up, Page Down, Home, End, Left, Up, Right, Down).
+
+## Mixins
+
+The module provides a single SASS mixin which helps improves a DOM element's UX for high-contrast mode users.
+
+Mixin | Description
+--- | ---
+`transparent-border` | Emits necessary layout styles to set a transparent border around an element without interfering with the rest of its component layout. The border is only visible in high-contrast mode. The target element should be a child of a relatively positioned top-level element (i.e. a ::before pseudo-element).

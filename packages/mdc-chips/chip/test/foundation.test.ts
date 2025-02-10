@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2017 Google Inc.
+ * Copyright 2020 Google Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,736 +21,567 @@
  * THE SOFTWARE.
  */
 
-
-import {verifyDefaultAdapter} from '../../../../testing/helpers/foundation';
+import {KEY} from '../../../mdc-dom/keyboard';
 import {setUpFoundationTest, setUpMdcTestEnvironment} from '../../../../testing/helpers/setup';
-import {EventSource} from '../constants';
+import {MDCChipActionFocusBehavior, MDCChipActionInteractionTrigger, MDCChipActionType} from '../../action/constants';
+import {MDCChipAnimation, MDCChipAttributes, MDCChipCssClasses, MDCChipEvents} from '../constants';
 import {MDCChipFoundation} from '../foundation';
-
-const {cssClasses, strings} = MDCChipFoundation;
+import {ActionInteractionEvent, ActionNavigationEvent} from '../types';
 
 describe('MDCChipFoundation', () => {
   setUpMdcTestEnvironment();
 
-  it('exports strings', () => {
-    expect('strings' in MDCChipFoundation).toBeTruthy();
-  });
+  const setupTest = () => {
+    const {foundation, mockAdapter} = setUpFoundationTest(MDCChipFoundation);
+    return {foundation, mockAdapter};
+  };
 
-  it('exports cssClasses', () => {
-    expect('cssClasses' in MDCChipFoundation).toBeTruthy();
-  });
-
-  it('defaultAdapter returns a complete adapter implementation', () => {
-    verifyDefaultAdapter(MDCChipFoundation, [
-      'addClass',
-      'removeClass',
-      'hasClass',
-      'addClassToLeadingIcon',
-      'removeClassFromLeadingIcon',
-      'eventTargetHasClass',
-      'notifyInteraction',
-      'notifyTrailingIconInteraction',
-      'notifyRemoval',
-      'notifySelection',
-      'getComputedStyleValue',
-      'setStyleProperty',
-      'hasLeadingIcon',
-      'getRootBoundingClientRect',
-      'getCheckmarkBoundingClientRect',
-      'notifyNavigation',
-      'focusPrimaryAction',
-      'focusTrailingAction',
-      'hasTrailingAction',
-      'isRTL',
-      'setPrimaryActionAttr',
-      'setTrailingActionAttr',
-      'getAttribute',
-    ]);
-  });
-
-  const setupTest =
-      () => {
-        const {foundation, mockAdapter} =
-            setUpFoundationTest(MDCChipFoundation);
-
-        mockAdapter.eventTargetHasClass.and.returnValue(false);
-        mockAdapter.hasClass.and.returnValue(false);
-
-        return {foundation, mockAdapter};
-      }
-
-  it('#isSelected returns true if mdc-chip--selected class is present', () => {
+  it(`#getElementID() returns the adapter's return value`, () => {
     const {foundation, mockAdapter} = setupTest();
-    mockAdapter.hasClass.and.returnValue(true);
-    expect(foundation.isSelected()).toBe(true);
+    mockAdapter.getElementID.and.returnValue('foo');
+    expect(foundation.getElementID()).toBe('foo');
   });
 
-  it('#isSelected returns false if mdc-chip--selected class is not present',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       mockAdapter.hasClass.and.returnValue(false);
-       expect(foundation.isSelected()).toBe(false);
-     });
-
-  it('#setSelected adds mdc-chip--selected class if true', () => {
+  it(`#getActions() returns the adapter's return value`, () => {
     const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(true);
-    expect(mockAdapter.addClass).toHaveBeenCalledWith(cssClasses.SELECTED);
+    mockAdapter.getActions.and.returnValue([MDCChipActionType.UNSPECIFIED]);
+    expect(foundation.getActions()).toEqual([MDCChipActionType.UNSPECIFIED]);
   });
 
-  it('#setSelected removes mdc-chip--selected class if false', () => {
+  it(`#isActionFocusable() returns the adapter's return value`, () => {
     const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(false);
-    expect(mockAdapter.removeClass).toHaveBeenCalledWith(cssClasses.SELECTED);
+    mockAdapter.isActionFocusable.and.returnValue(true);
+    expect(foundation.isActionFocusable(MDCChipActionType.UNSPECIFIED))
+        .toBe(true);
   });
 
-  it('#setSelected sets aria-checked="true" if true', () => {
+  it(`#isActionSelectable() returns the adapter's return value`, () => {
     const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(true);
-    expect(mockAdapter.setPrimaryActionAttr)
-        .toHaveBeenCalledWith(strings.ARIA_CHECKED, 'true');
+    mockAdapter.isActionSelectable.and.returnValue(true);
+    expect(foundation.isActionSelectable(MDCChipActionType.UNSPECIFIED))
+        .toBe(true);
   });
 
-  it('#setSelected sets aria-checked="false" if false', () => {
+  it(`#isActionSelected() returns the adapter's return value`, () => {
     const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(false);
-    expect(mockAdapter.setPrimaryActionAttr)
-        .toHaveBeenCalledWith(strings.ARIA_CHECKED, 'false');
+    mockAdapter.isActionSelected.and.returnValue(true);
+    expect(foundation.isActionSelected(MDCChipActionType.UNSPECIFIED))
+        .toBe(true);
   });
 
-  it('#setSelected notifies of selection when selected is true', () => {
-    const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(true);
-    expect(mockAdapter.notifySelection).toHaveBeenCalledWith(true, false);
-  });
-
-  it('#setSelected notifies of unselection when selected is false', () => {
-    const {foundation, mockAdapter} = setupTest();
-    foundation.setSelected(false);
-    expect(mockAdapter.notifySelection).toHaveBeenCalledWith(false, false);
-  });
-
-  it('#setSelectedFromChipSet notifies of selection with shouldIgnore set to true',
+  it(`#setActionFocus(` +
+         `${MDCChipActionType.UNSPECIFIED}, ${
+             MDCChipActionFocusBehavior.FOCUSABLE_AND_FOCUSED})` +
+         ` updates the action focus`,
      () => {
        const {foundation, mockAdapter} = setupTest();
-       foundation.setSelectedFromChipSet(true, true);
-       expect(mockAdapter.notifySelection).toHaveBeenCalledWith(true, true);
+       foundation.setActionFocus(
+           MDCChipActionType.UNSPECIFIED,
+           MDCChipActionFocusBehavior.FOCUSABLE_AND_FOCUSED);
+       expect(mockAdapter.setActionFocus)
+           .toHaveBeenCalledWith(
+               MDCChipActionType.UNSPECIFIED,
+               MDCChipActionFocusBehavior.FOCUSABLE_AND_FOCUSED);
      });
 
-  it('#getDimensions returns adapter.getRootBoundingClientRect when there is no checkmark bounding rect',
+  it(`#setActionSelected(${MDCChipActionType.UNSPECIFIED}, true) updates` +
+         ` the action selection`,
      () => {
        const {foundation, mockAdapter} = setupTest();
-       mockAdapter.getCheckmarkBoundingClientRect.and.returnValue(null);
-       const boundingRect = {width: 10, height: 10};
-       mockAdapter.getRootBoundingClientRect.and.returnValue(boundingRect);
-
-       expect(foundation.getDimensions() === boundingRect).toBe(true);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       expect(mockAdapter.setActionSelected)
+           .toHaveBeenCalledWith(MDCChipActionType.UNSPECIFIED, true);
      });
 
-  it('#getDimensions factors in the checkmark bounding rect when it exists and there is no leading icon',
+  it(`sequential calls to #setActionSelected() only modify the DOM once`,
      () => {
        const {foundation, mockAdapter} = setupTest();
-       const boundingRect = {width: 10, height: 10};
-       const checkmarkBoundingRect = {width: 5, height: 5};
-       mockAdapter.getCheckmarkBoundingClientRect.and.returnValue(
-           checkmarkBoundingRect);
-       mockAdapter.getRootBoundingClientRect.and.returnValue(boundingRect);
-       mockAdapter.hasLeadingIcon.and.returnValue(false);
-
-       const dimensions = foundation.getDimensions();
-       expect(dimensions.height).toEqual(boundingRect.height);
-       expect(dimensions.width)
-           .toEqual(boundingRect.width + checkmarkBoundingRect.height);
-     });
-
-  it('#getDimensions returns adapter.getRootBoundingClientRect when there is a checkmark and a leading icon',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const checkmarkBoundingRect = {width: 5, height: 5};
-       mockAdapter.getCheckmarkBoundingClientRect.and.returnValue(
-           checkmarkBoundingRect);
-       const boundingRect = {width: 10, height: 10};
-       mockAdapter.getRootBoundingClientRect.and.returnValue(boundingRect);
-       mockAdapter.hasLeadingIcon.and.returnValue(true);
-
-       expect(foundation.getDimensions() === boundingRect).toBe(true);
-     });
-
-  it(`#beginExit adds ${cssClasses.CHIP_EXIT} class`, () => {
-    const {foundation, mockAdapter} = setupTest();
-    foundation.beginExit();
-    expect(mockAdapter.addClass).toHaveBeenCalledWith(cssClasses.CHIP_EXIT);
-  });
-
-  it('#handleInteraction does not emit event on invalid key', () => {
-    const {foundation, mockAdapter} = setupTest();
-    const mockEvt = {
-      type: 'keydown',
-      key: 'Shift',
-    };
-
-    foundation.handleInteraction(mockEvt);
-    expect(mockAdapter.notifyInteraction).not.toHaveBeenCalled();
-  });
-
-  const validEvents = [
-    {
-      type: 'click',
-    },
-    {
-      type: 'keydown',
-      key: 'Enter',
-    },
-    {
-      type: 'keydown',
-      key: ' ',  // Space bar
-    },
-  ];
-
-  validEvents.forEach((evt) => {
-    it(`#handleInteraction(${evt}) notifies interaction`, () => {
-      const {foundation, mockAdapter} = setupTest();
-
-      foundation.handleInteraction(evt);
-      expect(mockAdapter.notifyInteraction).toHaveBeenCalled();
-    });
-
-    it(`#handleInteraction(${evt}) focuses the primary action`, () => {
-      const {foundation, mockAdapter} = setupTest();
-
-      foundation.handleInteraction(evt);
-      expect(mockAdapter.setPrimaryActionAttr)
-          .toHaveBeenCalledWith(strings.TAB_INDEX, '0');
-      expect(mockAdapter.setTrailingActionAttr)
-          .toHaveBeenCalledWith(strings.TAB_INDEX, '-1');
-      expect(mockAdapter.focusPrimaryAction).toHaveBeenCalled();
-    });
-  });
-
-  it('#handleTransitionEnd notifies removal of chip on width transition end',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'width',
-       };
-       mockAdapter.eventTargetHasClass.and.returnValue(true);
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.notifyRemoval).toHaveBeenCalled();
-     });
-
-  it('#handleTransitionEnd notifies removal of chip with removal announcement if present',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'width',
-       };
-       mockAdapter.eventTargetHasClass.and.returnValue(true);
-       mockAdapter.getAttribute.and.returnValue('Removed foo');
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.notifyRemoval).toHaveBeenCalledWith('Removed foo');
-     });
-
-  it('#handleTransitionEnd animates width if chip is exiting on chip opacity transition end',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'opacity',
-       };
-       mockAdapter.eventTargetHasClass.and.returnValue(true);
-       mockAdapter.getComputedStyleValue.and.returnValue('100px');
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       jasmine.clock().tick(1);
-       expect(mockAdapter.setStyleProperty)
-           .toHaveBeenCalledWith('width', '100px');
-       expect(mockAdapter.setStyleProperty)
-           .toHaveBeenCalledWith('padding', '0');
-       expect(mockAdapter.setStyleProperty).toHaveBeenCalledWith('margin', '0');
-
-       jasmine.clock().tick(1);
-       expect(mockAdapter.setStyleProperty).toHaveBeenCalledWith('width', '0');
-     });
-
-  it(`#handleTransitionEnd adds ${
-         cssClasses.HIDDEN_LEADING_ICON} class to leading icon ` +
-         'on leading icon opacity transition end, if chip is selected',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'opacity',
-       };
-       mockAdapter.eventTargetHasClass
-           .withArgs(mockEvt.target, cssClasses.CHIP_EXIT)
-           .and.returnValue(false);
-       mockAdapter.eventTargetHasClass
-           .withArgs(mockEvt.target, cssClasses.LEADING_ICON)
-           .and.returnValue(true);
-       mockAdapter.hasClass.withArgs(cssClasses.SELECTED).and.returnValue(true);
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.addClassToLeadingIcon)
-           .toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-     });
-
-  it('#handleTransitionEnd does nothing on leading icon opacity transition end,' +
-         'if chip is not selected',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'opacity',
-       };
-       mockAdapter.eventTargetHasClass.and.returnValue(true);
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.addClassToLeadingIcon)
-           .not.toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-     });
-
-  it(`#handleTransitionEnd removes ${
-         cssClasses.HIDDEN_LEADING_ICON} class from leading icon ` +
-         'on checkmark opacity transition end, if chip is not selected',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'opacity',
-       };
-       mockAdapter.eventTargetHasClass
-           .withArgs(mockEvt.target, cssClasses.CHECKMARK)
-           .and.returnValue(true);
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.removeClassFromLeadingIcon)
-           .toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-     });
-
-  it('#handleTransitionEnd does nothing on checkmark opacity transition end, if chip is selected',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'opacity',
-       };
-       mockAdapter.eventTargetHasClass.and.returnValue(true);
-       mockAdapter.hasClass.and.returnValue(true);
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.removeClassFromLeadingIcon)
-           .not.toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-     });
-
-  it('#handleTransitionEnd does nothing for width property when not exiting',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'transitionend',
-         target: {},
-         propertyName: 'width',
-       };
-
-       foundation.handleTransitionEnd(mockEvt);
-
-       expect(mockAdapter.notifyRemoval).not.toHaveBeenCalled();
-       expect(mockAdapter.addClassToLeadingIcon)
-           .not.toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-       expect(mockAdapter.removeClassFromLeadingIcon)
-           .not.toHaveBeenCalledWith(cssClasses.HIDDEN_LEADING_ICON);
-     });
-
-  it('#handleTrailingIconInteraction emits no event on invalid keys', () => {
-    const {foundation, mockAdapter} = setupTest();
-    const mockEvt = {
-      type: 'keydowb',
-      key: 'Shift',
-      stopPropagation: jasmine.createSpy('stopPropagation'),
-    };
-
-    foundation.handleTrailingIconInteraction(mockEvt);
-    expect(mockAdapter.notifyTrailingIconInteraction).not.toHaveBeenCalled();
-  });
-
-  it('#handleTrailingIconInteraction emits custom event on click or enter key in trailing icon',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'click',
-         stopPropagation: jasmine.createSpy('stopPropagation'),
-         preventDefault: jasmine.createSpy('preventDefault'),
-         key: '',
-       };
-
-       foundation.handleTrailingIconInteraction(mockEvt);
-       expect(mockAdapter.notifyTrailingIconInteraction)
-           .toHaveBeenCalledTimes(1);
-       expect(mockEvt.stopPropagation).toHaveBeenCalledTimes(1);
-       expect(mockEvt.preventDefault).toHaveBeenCalledTimes(1);
-
-       mockEvt.type = 'keydown';
-       mockEvt.key = ' ';
-       foundation.handleTrailingIconInteraction(mockEvt);
-       expect(mockAdapter.notifyTrailingIconInteraction)
-           .toHaveBeenCalledTimes(2);
-       expect(mockEvt.stopPropagation).toHaveBeenCalledTimes(2);
-       expect(mockEvt.preventDefault).toHaveBeenCalledTimes(2);
-
-       mockEvt.type = 'keydown';
-       mockEvt.key = 'Enter';
-       foundation.handleTrailingIconInteraction(mockEvt);
-       expect(mockAdapter.notifyTrailingIconInteraction)
-           .toHaveBeenCalledTimes(3);
-       expect(mockEvt.stopPropagation).toHaveBeenCalledTimes(3);
-       expect(mockEvt.preventDefault).toHaveBeenCalledTimes(3);
-     });
-
-  it(`#handleTrailingIconInteraction adds ${
-         cssClasses.CHIP_EXIT} class by default on click in trailing icon`,
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'click',
-         stopPropagation: jasmine.createSpy('stopPropagation'),
-         preventDefault: jasmine.createSpy('preventDefault'),
-       };
-
-       foundation.handleTrailingIconInteraction(mockEvt);
-
-       expect(foundation.getShouldRemoveOnTrailingIconClick()).toBe(true);
-       expect(mockAdapter.addClass).toHaveBeenCalledWith(cssClasses.CHIP_EXIT);
-       expect(mockEvt.stopPropagation).toHaveBeenCalled();
-       expect(mockEvt.preventDefault).toHaveBeenCalled();
-     });
-
-  it(`#handleTrailingIconInteraction does not add ${
-         cssClasses.CHIP_EXIT} class on click in trailing icon ` +
-         'if shouldRemoveOnTrailingIconClick_ is false',
-     () => {
-       const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'click',
-         stopPropagation: jasmine.createSpy('stopPropagation'),
-         preventDefault: jasmine.createSpy('preventDefault'),
-       };
-
-       foundation.setShouldRemoveOnTrailingIconClick(false);
-       foundation.handleTrailingIconInteraction(mockEvt);
-
-       expect(foundation.getShouldRemoveOnTrailingIconClick()).toBe(false);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, false);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       jasmine.clock().tick(3);
        expect(mockAdapter.addClass)
-           .not.toHaveBeenCalledWith(cssClasses.CHIP_EXIT);
-       expect(mockEvt.stopPropagation).toHaveBeenCalled();
-       expect(mockEvt.preventDefault).toHaveBeenCalled();
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTING);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTED);
+       expect(mockAdapter.addClass).toHaveBeenCalledTimes(2);
      });
 
-  it('#handleKeydown emits custom event with appropriate keys', () => {
+  it('#destroy() cancels selection animation frames', () => {
     const {foundation, mockAdapter} = setupTest();
-
-    [strings.ARROW_UP_KEY,
-     strings.IE_ARROW_UP_KEY,
-     strings.HOME_KEY,
-     strings.ARROW_DOWN_KEY,
-     strings.IE_ARROW_DOWN_KEY,
-     strings.END_KEY,
-    ].forEach((key) => {
-      const mockEvt = {
-        type: 'keydown',
-        key,
-        preventDefault: jasmine.createSpy('.preventDefault'),
-      };
-
-      foundation.handleKeydown(mockEvt);
-      expect(mockAdapter.notifyNavigation).toHaveBeenCalledWith(key, 2);
-    });
+    foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+    foundation.destroy();
+    jasmine.clock().tick(3);
+    expect(mockAdapter.addClass)
+        .not.toHaveBeenCalledWith(MDCChipCssClasses.SELECTING);
+    expect(mockAdapter.addClass)
+        .not.toHaveBeenCalledWith(MDCChipCssClasses.SELECTED);
   });
 
-  it('#handleKeydown calls preventDefault on navigation events', () => {
-    const {foundation} = setupTest();
-    const mockEvt = {
-      type: 'keydown',
-      key: strings.ARROW_LEFT_KEY,
-      preventDefault: jasmine.createSpy('.preventDefault'),
-    };
-
-    foundation.handleKeydown(mockEvt);
-    expect(mockEvt.preventDefault).toHaveBeenCalledTimes(1);
-  });
-
-  it('#handleKeydown does not emit a custom event for inappropriate keys',
+  it(`#setActionSelected(${
+         MDCChipActionType.UNSPECIFIED}, true) adds the selected class`,
      () => {
        const {foundation, mockAdapter} = setupTest();
-       const mockEvt = {
-         type: 'keydown',
-         key: ' ',
-       };
-
-       foundation.handleKeydown(mockEvt);
-       expect(mockAdapter.notifyNavigation)
-           .not.toHaveBeenCalledWith(jasmine.any(String));
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       jasmine.clock().tick(3);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTED);
      });
 
-  function setupNavigationTest({
-    fromPrimaryAction = false,
-    hasTrailingAction = false,
-    fromTrailingAction = false,
-    isRTL = false
-  } = {}) {
-    const {foundation, mockAdapter} = setupTest();
-    mockAdapter.hasTrailingAction.and.returnValue(
-        hasTrailingAction || fromTrailingAction);
-    mockAdapter.isRTL.and.returnValue(isRTL);
-    mockAdapter.eventTargetHasClass
-        .withArgs(jasmine.anything(), cssClasses.PRIMARY_ACTION)
-        .and.returnValue(fromPrimaryAction);
-    mockAdapter.eventTargetHasClass
-        .withArgs(jasmine.anything(), cssClasses.TRAILING_ACTION)
-        .and.returnValue(fromTrailingAction);
-    return {mockAdapter, foundation};
-  }
-
-  function mockKeyboardEvent(key: string) {
-    return {
-      type: 'keydown',
-      preventDefault: jasmine.createSpy('.preventDefault'),
-      stopPropagation: jasmine.createSpy('.stopPropagation'),
-      target: jasmine.createSpy('.target'),
-      key,
-    };
-  }
-
-  [strings.ARROW_LEFT_KEY, strings.IE_ARROW_LEFT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused text emits appropriate event`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromPrimaryAction: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.PRIMARY);
-       });
-  });
-
-  [strings.ARROW_RIGHT_KEY, strings.IE_ARROW_RIGHT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused text emits appropriate event`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromPrimaryAction: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.PRIMARY);
-       });
-  });
-
-  [strings.ARROW_LEFT_KEY, strings.IE_ARROW_LEFT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused text emits appropriate event in RTL`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromPrimaryAction: true,
-           isRTL: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.PRIMARY);
-       });
-  });
-
-  [strings.ARROW_RIGHT_KEY, strings.IE_ARROW_RIGHT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused text emits appropriate event in RTL`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromPrimaryAction: true,
-           isRTL: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.PRIMARY);
-       });
-  });
-
-  [strings.ARROW_RIGHT_KEY, strings.IE_ARROW_RIGHT_KEY].forEach((key) => {
-    it(`#handleKeydown ${
-           key} from focused trailing action emits appropriate event`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromTrailingAction: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.NONE);
-       });
-  });
-
-  [strings.ARROW_LEFT_KEY, strings.IE_ARROW_LEFT_KEY].forEach((key) => {
-    it(`#handleKeydown ${
-           key} from focused trailing action emits appropriate event in RTL`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromTrailingAction: true,
-           isRTL: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.notifyNavigation)
-             .toHaveBeenCalledWith(key, EventSource.NONE);
-       });
-  });
-
-  [strings.ARROW_RIGHT_KEY, strings.IE_ARROW_RIGHT_KEY].forEach((key) => {
-    it(`#handleKeydown ${
-           key} from focused text with trailing icon focuses trailing icon`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest(
-             {fromPrimaryAction: true, hasTrailingAction: true});
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.setTrailingActionAttr)
-             .toHaveBeenCalledWith('tabindex', '0');
-         expect(mockAdapter.setPrimaryActionAttr)
-             .toHaveBeenCalledWith('tabindex', '-1');
-         expect(mockAdapter.focusTrailingAction).toHaveBeenCalled();
-       });
-  });
-
-  [strings.ARROW_LEFT_KEY, strings.IE_ARROW_LEFT_KEY].forEach((key) => {
-    it(`#handleKeydown ${
-           key} from focused text with trailing icon focuses trailing icon in RTL`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest({
-           fromPrimaryAction: true,
-           isRTL: true,
-           hasTrailingAction: true,
-         });
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.setTrailingActionAttr)
-             .toHaveBeenCalledWith('tabindex', '0');
-         expect(mockAdapter.setPrimaryActionAttr)
-             .toHaveBeenCalledWith('tabindex', '-1');
-         expect(mockAdapter.focusTrailingAction).toHaveBeenCalled();
-       });
-  });
-
-  [strings.ARROW_LEFT_KEY, strings.IE_ARROW_LEFT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused trailing icon focuses text`, () => {
-      const {foundation, mockAdapter} = setupNavigationTest(
-          {hasTrailingAction: true, fromTrailingAction: true});
-      foundation.handleKeydown(mockKeyboardEvent(key));
-      expect(mockAdapter.setTrailingActionAttr)
-          .toHaveBeenCalledWith('tabindex', '-1');
-      expect(mockAdapter.setPrimaryActionAttr)
-          .toHaveBeenCalledWith('tabindex', '0');
-      expect(mockAdapter.focusPrimaryAction).toHaveBeenCalled();
-    });
-  });
-
-  [strings.ARROW_RIGHT_KEY, strings.IE_ARROW_RIGHT_KEY].forEach((key) => {
-    it(`#handleKeydown ${key} from focused trailing icon focuses text in RTL`,
-       () => {
-         const {foundation, mockAdapter} = setupNavigationTest(
-             {hasTrailingAction: true, fromTrailingAction: true, isRTL: true});
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.setTrailingActionAttr)
-             .toHaveBeenCalledWith('tabindex', '-1');
-         expect(mockAdapter.setPrimaryActionAttr)
-             .toHaveBeenCalledWith('tabindex', '0');
-         expect(mockAdapter.focusPrimaryAction).toHaveBeenCalled();
-       });
-  });
-
-  /**
-   * Verify deletability when class is present
-   */
-  [strings.BACKSPACE_KEY,
-   strings.DELETE_KEY,
-   strings.IE_DELETE_KEY,
-  ].forEach((key) => {
-    it(`#handleKeydown ${
-           key} adds the chip exit class when deletable class is present on root`,
-       () => {
-         const {foundation, mockAdapter} = setupTest();
-         mockAdapter.hasClass.and.returnValue(true);
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.addClass)
-             .toHaveBeenCalledWith(cssClasses.CHIP_EXIT);
-       });
-  });
-
-  /**
-   * Verify no deletability when class is absent
-   */
-  [strings.BACKSPACE_KEY,
-   strings.DELETE_KEY,
-   strings.IE_DELETE_KEY,
-  ].forEach((key) => {
-    it(`#handleKeydown ${
-           key} adds the chip exit class when deletable class is present on root`,
-       () => {
-         const {foundation, mockAdapter} = setupTest();
-         mockAdapter.hasClass.and.returnValue(false);
-         foundation.handleKeydown(mockKeyboardEvent(key));
-         expect(mockAdapter.addClass)
-             .not.toHaveBeenCalledWith(cssClasses.CHIP_EXIT);
-       });
-  });
-
-  it('#focusPrimaryAction() gives focus to the primary action', () => {
-    const {foundation, mockAdapter} = setupNavigationTest();
-    foundation.focusPrimaryAction();
-    expect(mockAdapter.setTrailingActionAttr)
-        .toHaveBeenCalledWith('tabindex', '-1');
-    expect(mockAdapter.setPrimaryActionAttr)
-        .toHaveBeenCalledWith('tabindex', '0');
-    expect(mockAdapter.focusPrimaryAction).toHaveBeenCalled();
-  });
-
-  it('#focusTrailingAction() gives focus to the primary action when the trailing action is absent',
-     () => {
-       const {foundation, mockAdapter} = setupNavigationTest();
-       mockAdapter.hasTrailingAction.and.returnValue(false);
-       foundation.focusTrailingAction();
-       expect(mockAdapter.setTrailingActionAttr)
-           .toHaveBeenCalledWith('tabindex', '-1');
-       expect(mockAdapter.setPrimaryActionAttr)
-           .toHaveBeenCalledWith('tabindex', '0');
-       expect(mockAdapter.focusPrimaryAction).toHaveBeenCalled();
-     });
-
-  it('#focusTrailingAction() gives focus to the trailing action when the trailing action is present',
-     () => {
-       const {foundation, mockAdapter} = setupNavigationTest();
-       mockAdapter.hasTrailingAction.and.returnValue(true);
-       foundation.focusTrailingAction();
-       expect(mockAdapter.setPrimaryActionAttr)
-           .toHaveBeenCalledWith('tabindex', '-1');
-       expect(mockAdapter.setTrailingActionAttr)
-           .toHaveBeenCalledWith('tabindex', '0');
-       expect(mockAdapter.focusTrailingAction).toHaveBeenCalled();
-     });
-
-  it('#removeFocus() sets tabindex -1 on the primary and trailing action',
+  it(`#setActionSelected(${
+         MDCChipActionType.UNSPECIFIED}, false) removes the selected class`,
      () => {
        const {foundation, mockAdapter} = setupTest();
-       foundation.removeFocus();
-       expect(mockAdapter.setPrimaryActionAttr)
-           .toHaveBeenCalledWith(strings.TAB_INDEX, '-1');
-       expect(mockAdapter.setTrailingActionAttr)
-           .toHaveBeenCalledWith(strings.TAB_INDEX, '-1');
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, false);
+       jasmine.clock().tick(3);
+       expect(mockAdapter.removeClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTED);
+     });
+
+  it(`#setActionSelected(${
+         MDCChipActionType.UNSPECIFIED}, true) removes all animating classes`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       expect(mockAdapter.removeClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTING);
+       expect(mockAdapter.removeClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.DESELECTING);
+       expect(mockAdapter.removeClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTING_WITH_PRIMARY_ICON);
+       expect(mockAdapter.removeClass)
+           .toHaveBeenCalledWith(
+               MDCChipCssClasses.DESELECTING_WITH_PRIMARY_ICON);
+     });
+
+  it(`#setActionSelected(${
+         MDCChipActionType
+             .UNSPECIFIED}, true) adds the selecting class when no primary icon is present`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.WITH_PRIMARY_ICON)
+           .and.returnValue(false);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       jasmine.clock().tick(2);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTING);
+     });
+
+  it(`#setActionSelected(${
+         MDCChipActionType
+             .UNSPECIFIED}, true) adds the selecting with icon class when the primary icon is present`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.WITH_PRIMARY_ICON)
+           .and.returnValue(true);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, true);
+       jasmine.clock().tick(2);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.SELECTING_WITH_PRIMARY_ICON);
+     });
+
+  it(`#setActionSelected(${
+         MDCChipActionType
+             .UNSPECIFIED}, false) adds the deselecting class when no primary icon is present`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.WITH_PRIMARY_ICON)
+           .and.returnValue(false);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, false);
+       jasmine.clock().tick(2);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(MDCChipCssClasses.DESELECTING);
+     });
+
+  it(`#setActionSelected(${
+         MDCChipActionType
+             .UNSPECIFIED}, false) adds the deelecting with icon class when the primary icon is present`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.WITH_PRIMARY_ICON)
+           .and.returnValue(true);
+       foundation.setActionSelected(MDCChipActionType.UNSPECIFIED, false);
+       jasmine.clock().tick(2);
+       expect(mockAdapter.addClass)
+           .toHaveBeenCalledWith(
+               MDCChipCssClasses.DESELECTING_WITH_PRIMARY_ICON);
+     });
+
+  it('#setDisabled(true) makes each action disabled', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getActions.and.returnValue([MDCChipActionType.UNSPECIFIED]);
+    foundation.setDisabled(true);
+    expect(mockAdapter.setActionDisabled)
+        .toHaveBeenCalledWith(MDCChipActionType.UNSPECIFIED, true);
+  });
+
+  it('#setDisabled(true) adds the disabled class', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getActions.and.returnValue([MDCChipActionType.UNSPECIFIED]);
+    foundation.setDisabled(true);
+    expect(mockAdapter.addClass)
+        .toHaveBeenCalledWith(MDCChipCssClasses.DISABLED);
+  });
+
+  it('#setDisabled(false) makes each action enabled', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getActions.and.returnValue([MDCChipActionType.UNSPECIFIED]);
+    foundation.setDisabled(false);
+    expect(mockAdapter.setActionDisabled)
+        .toHaveBeenCalledWith(MDCChipActionType.UNSPECIFIED, false);
+  });
+
+  it('#setDisabled(false) removes the disabled class', () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getActions.and.returnValue([MDCChipActionType.UNSPECIFIED]);
+    foundation.setDisabled(false);
+    expect(mockAdapter.removeClass)
+        .toHaveBeenCalledWith(MDCChipCssClasses.DISABLED);
+  });
+
+  it(`#handleActionInteraction() emits ${MDCChipEvents.INTERACTION}`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getElementID.and.returnValue('foo');
+    mockAdapter.isActionSelected.withArgs(MDCChipActionType.UNSPECIFIED)
+        .and.returnValue(true);
+    mockAdapter.isActionSelectable.withArgs(MDCChipActionType.UNSPECIFIED)
+        .and.returnValue(true);
+
+    foundation.handleActionInteraction({
+      detail: {
+        actionID: 'bar',
+        source: MDCChipActionType.UNSPECIFIED,
+        trigger: MDCChipActionInteractionTrigger.CLICK,
+      },
+    } as ActionInteractionEvent);
+
+    expect(mockAdapter.emitEvent)
+        .toHaveBeenCalledWith(MDCChipEvents.INTERACTION, {
+          actionID: 'bar',
+          chipID: 'foo',
+          shouldRemove: false,
+          isSelectable: true,
+          isSelected: true,
+          source: MDCChipActionType.UNSPECIFIED,
+        });
+  });
+
+  it(`#handleActionInteraction() emits ${MDCChipEvents.INTERACTION} with` +
+         ` {shouldRemove: true} when from action "${
+             MDCChipActionType.TRAILING}"`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       foundation.handleActionInteraction({
+         detail: {
+           actionID: 'bar',
+           source: MDCChipActionType.TRAILING,
+           trigger: MDCChipActionInteractionTrigger.CLICK,
+         },
+       } as ActionInteractionEvent);
+
+       expect(mockAdapter.emitEvent)
+           .toHaveBeenCalledWith(MDCChipEvents.INTERACTION, {
+             actionID: 'bar',
+             chipID: '',
+             shouldRemove: true,
+             isSelectable: false,
+             isSelected: false,
+             source: MDCChipActionType.TRAILING,
+           });
+     });
+
+  it(`#handleActionInteraction() emits ${MDCChipEvents.INTERACTION} with` +
+         ` {shouldRemove: true} when from` +
+         ` trigger "${MDCChipActionInteractionTrigger.BACKSPACE_KEY}"`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       foundation.handleActionInteraction({
+         detail: {
+           actionID: 'bar',
+           source: MDCChipActionType.UNSPECIFIED,
+           trigger: MDCChipActionInteractionTrigger.BACKSPACE_KEY,
+         },
+       } as ActionInteractionEvent);
+
+       expect(mockAdapter.emitEvent)
+           .toHaveBeenCalledWith(MDCChipEvents.INTERACTION, {
+             actionID: 'bar',
+             chipID: '',
+             shouldRemove: true,
+             isSelectable: false,
+             isSelected: false,
+             source: MDCChipActionType.UNSPECIFIED,
+           });
+     });
+
+  describe('#handleActionNavigation', () => {
+    describe('ArrowRight', () => {
+      // Use the same key for all tests
+      const key = KEY.ARROW_RIGHT;
+
+      it(`from primary action focuses trailing action if focusable`, () => {
+        const {foundation, mockAdapter} = setupTest();
+        mockAdapter.isActionFocusable.withArgs(MDCChipActionType.TRAILING)
+            .and.returnValue(true);
+
+        foundation.handleActionNavigation({
+          detail: {
+            source: MDCChipActionType.PRIMARY,
+            key,
+          },
+        } as ActionNavigationEvent);
+
+        expect(mockAdapter.setActionFocus)
+            .toHaveBeenCalledWith(
+                MDCChipActionType.TRAILING,
+                MDCChipActionFocusBehavior.FOCUSABLE_AND_FOCUSED);
+        expect(mockAdapter.setActionFocus)
+            .toHaveBeenCalledWith(
+                MDCChipActionType.PRIMARY,
+                MDCChipActionFocusBehavior.NOT_FOCUSABLE);
+      });
+
+      it(`from primary action emits ${MDCChipEvents.NAVIGATION}` +
+             ` if trailing action is not focusable`,
+         () => {
+           const {foundation, mockAdapter} = setupTest();
+           mockAdapter.getElementID.and.returnValue('foo');
+           mockAdapter.isActionFocusable.withArgs(MDCChipActionType.TRAILING)
+               .and.returnValue(false);
+
+           foundation.handleActionNavigation({
+             detail: {
+               source: MDCChipActionType.PRIMARY,
+               key,
+             },
+           } as ActionNavigationEvent);
+
+           expect(mockAdapter.emitEvent)
+               .toHaveBeenCalledWith(MDCChipEvents.NAVIGATION, {
+                 chipID: 'foo',
+                 source: MDCChipActionType.PRIMARY,
+                 isRTL: false,
+                 key,
+               });
+         });
+
+      it(`from primary action in RTL emits ${MDCChipEvents.NAVIGATION}`, () => {
+        const {foundation, mockAdapter} = setupTest();
+        mockAdapter.isRTL.and.returnValue(true);
+        mockAdapter.getElementID.and.returnValue('foo');
+
+        foundation.handleActionNavigation({
+          detail: {
+            source: MDCChipActionType.PRIMARY,
+            key,
+          },
+        } as ActionNavigationEvent);
+
+        expect(mockAdapter.emitEvent)
+            .toHaveBeenCalledWith(MDCChipEvents.NAVIGATION, {
+              chipID: 'foo',
+              source: MDCChipActionType.PRIMARY,
+              isRTL: true,
+              key,
+            });
+      });
+    });
+
+    describe('ArrowLeft', () => {
+      // Use the same key for all tests
+      const key = KEY.ARROW_LEFT;
+
+      it(`from trailing action focuses primary action if focusable`, () => {
+        const {foundation, mockAdapter} = setupTest();
+        mockAdapter.isActionFocusable.withArgs(MDCChipActionType.PRIMARY)
+            .and.returnValue(true);
+
+        foundation.handleActionNavigation({
+          detail: {
+            source: MDCChipActionType.TRAILING,
+            key,
+          },
+        } as ActionNavigationEvent);
+
+        expect(mockAdapter.setActionFocus)
+            .toHaveBeenCalledWith(
+                MDCChipActionType.PRIMARY,
+                MDCChipActionFocusBehavior.FOCUSABLE_AND_FOCUSED);
+        expect(mockAdapter.setActionFocus)
+            .toHaveBeenCalledWith(
+                MDCChipActionType.TRAILING,
+                MDCChipActionFocusBehavior.NOT_FOCUSABLE);
+      });
+
+      it(`from trailing action emits ${MDCChipEvents.NAVIGATION}` +
+             ` if primary action is not focusable`,
+         () => {
+           const {foundation, mockAdapter} = setupTest();
+           mockAdapter.getElementID.and.returnValue('foo');
+           mockAdapter.isActionFocusable.withArgs(MDCChipActionType.PRIMARY)
+               .and.returnValue(false);
+
+           foundation.handleActionNavigation({
+             detail: {
+               source: MDCChipActionType.TRAILING,
+               key,
+             },
+           } as ActionNavigationEvent);
+
+           expect(mockAdapter.emitEvent)
+               .toHaveBeenCalledWith(MDCChipEvents.NAVIGATION, {
+                 chipID: 'foo',
+                 source: MDCChipActionType.TRAILING,
+                 isRTL: false,
+                 key,
+               });
+         });
+
+      it(`from trailing action in RTL emits ${MDCChipEvents.NAVIGATION}`,
+         () => {
+           const {foundation, mockAdapter} = setupTest();
+           mockAdapter.isRTL.and.returnValue(true);
+           mockAdapter.getElementID.and.returnValue('foo');
+
+           foundation.handleActionNavigation({
+             detail: {
+               source: MDCChipActionType.TRAILING,
+               key,
+             },
+           } as ActionNavigationEvent);
+
+           expect(mockAdapter.emitEvent)
+               .toHaveBeenCalledWith(MDCChipEvents.NAVIGATION, {
+                 chipID: 'foo',
+                 source: MDCChipActionType.TRAILING,
+                 isRTL: true,
+                 key,
+               });
+         });
+    });
+
+    const emittingKeys = [
+      KEY.ARROW_UP,
+      KEY.ARROW_DOWN,
+      KEY.HOME,
+      KEY.END,
+    ];
+
+    for (const key of emittingKeys) {
+      it(`${key} emits ${MDCChipEvents.NAVIGATION}`, () => {
+        const {foundation, mockAdapter} = setupTest();
+        mockAdapter.getElementID.and.returnValue('foo');
+
+        foundation.handleActionNavigation({
+          detail: {
+            source: MDCChipActionType.UNSPECIFIED,
+            key,
+          },
+        } as ActionNavigationEvent);
+
+        expect(mockAdapter.emitEvent)
+            .toHaveBeenCalledWith(MDCChipEvents.NAVIGATION, {
+              chipID: 'foo',
+              source: MDCChipActionType.UNSPECIFIED,
+              isRTL: false,
+              key,
+            });
+      });
+    }
+  });
+
+  it(`#startAnimation(${MDCChipAnimation.ENTER}) adds the enter class`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.startAnimation(MDCChipAnimation.ENTER);
+    expect(mockAdapter.addClass).toHaveBeenCalledWith(MDCChipCssClasses.ENTER);
+  });
+
+  it(`#startAnimation(${MDCChipAnimation.EXIT}) adds the exit class`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.startAnimation(MDCChipAnimation.EXIT);
+    expect(mockAdapter.addClass).toHaveBeenCalledWith(MDCChipCssClasses.EXIT);
+  });
+
+  it(`#handleAnimationEnd() for enter removes the enter class`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-enter'} as AnimationEvent);
+    expect(mockAdapter.removeClass)
+        .toHaveBeenCalledWith(MDCChipCssClasses.ENTER);
+  });
+
+  it(`#handleAnimationEnd() for enter emits an event`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getElementID.and.returnValue('foo');
+    mockAdapter.getAttribute.withArgs(MDCChipAttributes.DATA_ADDED_ANNOUNCEMENT)
+        .and.returnValue('Added foo');
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-enter'} as AnimationEvent);
+    expect(mockAdapter.emitEvent)
+        .toHaveBeenCalledWith(MDCChipEvents.ANIMATION, {
+          chipID: 'foo',
+          addedAnnouncement: 'Added foo',
+          animation: MDCChipAnimation.ENTER,
+          isComplete: true,
+        });
+  });
+
+  it(`#handleAnimationEnd() for exit removes the exit class`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-exit'} as AnimationEvent);
+    expect(mockAdapter.removeClass)
+        .toHaveBeenCalledWith(MDCChipCssClasses.EXIT);
+  });
+
+  it(`#handleAnimationEnd() for exit adds the hidden class`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-exit'} as AnimationEvent);
+    expect(mockAdapter.addClass).toHaveBeenCalledWith(MDCChipCssClasses.HIDDEN);
+  });
+
+  it(`#handleAnimationEnd() sets the computed width on the root`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    mockAdapter.getOffsetWidth.and.returnValue(123);
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-exit'} as AnimationEvent);
+    expect(mockAdapter.setStyleProperty).toHaveBeenCalledWith('width', '123px');
+  });
+
+  it(`#handleAnimationEnd() sets the width on the root to 0`, () => {
+    const {foundation, mockAdapter} = setupTest();
+    foundation.handleAnimationEnd(
+        {animationName: 'mdc-evolution-chip-exit'} as AnimationEvent);
+    jasmine.clock().tick(2);
+    expect(mockAdapter.setStyleProperty).toHaveBeenCalledWith('width', '0');
+  });
+
+  it(`#handleTransitionEnd() emits an event when the root has the hidden class`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.getElementID.and.returnValue('foo');
+       mockAdapter.getAttribute
+           .withArgs(MDCChipAttributes.DATA_REMOVED_ANNOUNCEMENT)
+           .and.returnValue('Removed foo');
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.HIDDEN)
+           .and.returnValue(true);
+       foundation.handleTransitionEnd();
+       expect(mockAdapter.emitEvent)
+           .toHaveBeenCalledWith(MDCChipEvents.ANIMATION, {
+             chipID: 'foo',
+             removedAnnouncement: 'Removed foo',
+             animation: MDCChipAnimation.EXIT,
+             isComplete: true,
+           });
+     });
+
+  it(`#handleTransitionEnd() does not emit an event when the root does not have the hidden class`,
+     () => {
+       const {foundation, mockAdapter} = setupTest();
+       mockAdapter.hasClass.withArgs(MDCChipCssClasses.HIDDEN)
+           .and.returnValue(false);
+       foundation.handleTransitionEnd();
+       expect(mockAdapter.emitEvent).not.toHaveBeenCalled();
      });
 });

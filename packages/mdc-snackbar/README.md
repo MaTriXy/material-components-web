@@ -9,13 +9,6 @@ path: /catalog/snackbars/
 
 # Snackbars
 
-<!--<div class="article__asset">
-  <a class="article__asset-link"
-     href="https://material-components.github.io/material-components-web-catalog/#/component/snackbar">
-    <img src="{{ site.rootpath }}/images/mdc_web_screenshots/snackbars.png" width="336" alt="Snackbar screenshot">
-  </a>
-</div>-->
-
 Snackbars provide brief messages about app processes at the bottom of the screen.
 
 ## Design & API Documentation
@@ -40,21 +33,19 @@ npm install @material/snackbar
 ### HTML Structure
 
 ```html
-<div class="mdc-snackbar">
-  <div class="mdc-snackbar__surface">
-    <div class="mdc-snackbar__label"
-         role="status"
-         aria-live="polite">
+<aside class="mdc-snackbar">
+  <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+    <div class="mdc-snackbar__label" aria-atomic="false">
       Can't send photo. Retry in 5 seconds.
     </div>
-    <div class="mdc-snackbar__actions">
+    <div class="mdc-snackbar__actions" aria-atomic="true">
       <button type="button" class="mdc-button mdc-snackbar__action">
         <div class="mdc-button__ripple"></div>
         <span class="mdc-button__label">Retry</span>
       </button>
     </div>
   </div>
-</div>
+</aside>
 ```
 
 ### Styles
@@ -79,9 +70,9 @@ const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
 Action buttons with long text should be positioned _below_ the label instead of alongside it. This can be accomplished by adding the `mdc-snackbar--stacked` modifier class to the root element:
 
 ```html
-<div class="mdc-snackbar mdc-snackbar--stacked">
+<aside class="mdc-snackbar mdc-snackbar--stacked">
   ...
-</div>
+</aside>
 ```
 
 Alternatively, you can call the `layout-stacked` mixin from Sass:
@@ -103,9 +94,9 @@ By default, snackbars are centered horizontally within the viewport.
 On larger screens, they can optionally be displayed on the _leading_ edge of the screen (the left side in LTR, or the right side in RTL) by adding the `mdc-snackbar--leading` modifier class to the root element:
 
 ```html
-<div class="mdc-snackbar mdc-snackbar--leading">
+<aside class="mdc-snackbar mdc-snackbar--leading">
   ...
-</div>
+</aside>
 ```
 
 Alternatively, you can call the `position-leading` mixin from Sass:

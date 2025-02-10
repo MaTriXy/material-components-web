@@ -21,11 +21,11 @@
  * THE SOFTWARE.
  */
 
-import {getFixture as createFixture} from '../../../../testing/dom/index';
+import {createFixture, html} from '../../../../testing/dom/index';
 import {MDCSelectHelperText} from '../index';
 
-const getFixture = () => createFixture(`
-  <div class="mdc-select-helper-text"></div>
+const getFixture = () => createFixture(html`
+  <p class="mdc-select-helper-text"></p>
 `);
 
 describe('MDCSelectHelperText', () => {
@@ -39,53 +39,49 @@ describe('MDCSelectHelperText', () => {
   function setupTest() {
     const root = getFixture();
     const component = new MDCSelectHelperText(root);
-    return {root, component};
+    const adapter = component.getDefaultFoundation()['adapter'];
+    return {root, adapter};
   }
 
   it('#adapter.addClass adds a class to the element', () => {
-    const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    const {root, adapter} = setupTest();
+    adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('#adapter.removeClass removes a class from the element', () => {
-    const {root, component} = setupTest();
+    const {root, adapter} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('#adapter.hasClass returns whether or not the element contains a certain class',
      () => {
-       const {root, component} = setupTest();
+       const {root, adapter} = setupTest();
        root.classList.add('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
-           .toBeTruthy();
+       expect(adapter.hasClass('foo')).toBeTruthy();
        root.classList.remove('foo');
-       expect(
-           (component.getDefaultFoundation() as any).adapter_.hasClass('foo'))
-           .toBeFalsy();
+       expect(adapter.hasClass('foo')).toBeFalsy();
      });
 
-  it('#adapter.setAttr adds a given attribute to the element', () => {
-    const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any)
-        .adapter_.setAttr('aria-label', 'foo');
-    expect(root.getAttribute('aria-label')).toEqual('foo');
-  });
+  it('#adapter.get/setAttr retrieves/adds a given attribute to the element',
+     () => {
+       const {adapter} = setupTest();
+       adapter.setAttr('aria-label', 'foo');
+       expect(adapter.getAttr('aria-label')).toEqual('foo');
+     });
 
   it('#adapter.removeAttr removes a given attribute from the element', () => {
-    const {root, component} = setupTest();
+    const {root, adapter} = setupTest();
     root.setAttribute('aria-label', 'foo');
-    (component.getDefaultFoundation() as any)
-        .adapter_.removeAttr('aria-label', 'foo');
+    adapter.removeAttr('aria-label');
     expect(root.hasAttribute('aria-label')).toBeFalsy();
   });
 
   it('#adapter.setContent sets the text content of the element', () => {
-    const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.setContent('foo');
+    const {root, adapter} = setupTest();
+    adapter.setContent('foo');
     expect(root.textContent).toEqual('foo');
   });
 });

@@ -13,8 +13,8 @@ To try Material Components for the web with minimal setup, load the precompiled 
 
 ```html
 <head>
-  <link href="https://unpkg.com/material-components-web@v4.0.0/dist/material-components-web.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/material-components-web@v4.0.0/dist/material-components-web.min.js"></script>
+  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
 </head>
 ```
 
@@ -38,7 +38,7 @@ Then include MDC markup...
 ...and instantiate JavaScript:
 
 ```js
-mdc.ripple.MDCRipple.attachTo(document.querySelector('.foo-button'));
+mdc.ripple.MDCRipple.attachTo(document.querySelector<HTMLElement>('.foo-button'));
 ```
 
 ## Installing Locally
@@ -74,7 +74,7 @@ We’re going to use `webpack-dev-server` to demonstrate how webpack bundles our
 ```json
 {
   "scripts": {
-    "start": "webpack-dev-server"
+    "start": "webpack serve"
   }
 }
 ```
@@ -142,6 +142,9 @@ module.exports = [{
             options: {
               // Prefer Dart Sass
               implementation: require('sass'),
+
+              // See https://github.com/webpack-contrib/sass-loader/issues/804
+              webpackImporter: false,
             },
           },
         ]
@@ -188,6 +191,9 @@ We also need to configure sass-loader to understand the `@material` imports used
   options: {
     // Prefer Dart Sass
     implementation: require('sass'),
+
+    // See https://github.com/webpack-contrib/sass-loader/issues/804
+    webpackImporter: false,
     sassOptions: {
       includePaths: ['./node_modules']
     },
@@ -223,12 +229,16 @@ Then add `postcss-loader`, using `autoprefixer` as a plugin:
 ```js
 { loader: 'extract-loader' },
 { loader: 'css-loader' },
-{
-  loader: 'postcss-loader',
-  options: {
-     plugins: () => [autoprefixer()]
-  }
-},
+  {
+    loader: 'postcss-loader',
+    options: {
+      postcssOptions: {
+        plugins: [
+          autoprefixer()
+        ]
+      }
+    } 
+  },
 {
   loader: 'sass-loader',
   options: {
@@ -237,6 +247,9 @@ Then add `postcss-loader`, using `autoprefixer` as a plugin:
     },
     // Prefer Dart Sass
     implementation: require('sass'),
+
+    // See https://github.com/webpack-contrib/sass-loader/issues/804
+    webpackImporter: false,
   }
 },
 ```
@@ -331,14 +344,21 @@ module.exports = {
           {
             loader: 'postcss-loader',
             options: {
-              plugins: () => [autoprefixer()]
-            }
+              postcssOptions: {
+                plugins: [
+                  autoprefixer()
+                ]
+              }
+            } 
           },
           {
             loader: 'sass-loader',
             options: {
               // Prefer Dart Sass
               implementation: require('sass'),
+
+              // See https://github.com/webpack-contrib/sass-loader/issues/804
+              webpackImporter: false,
               sassOptions: {
                 includePaths: ['./node_modules'],
               },
@@ -372,7 +392,7 @@ We need to tell our `app.js` to import the ES2015 file for `@material/ripple`. W
 
 ```js
 import {MDCRipple} from '@material/ripple/index';
-const ripple = new MDCRipple(document.querySelector('.foo-button'));
+const ripple = new MDCRipple(document.querySelector<HTMLElement>('.foo-button'));
 ```
 
 > Note: We explicitly reference `index` within each MDC Web package in order to import the ES2015 source directly.
@@ -392,7 +412,7 @@ Add another script to `package.json`:
 ```json
   "scripts": {
     "build": "webpack",
-    "start": "webpack-dev-server"
+    "start": "webpack serve"
   }
 ```
 
@@ -448,10 +468,18 @@ function materialImporter(url, prev) {
 Then update your `sass-loader` config to the following:
 
 ```js
-{
-  loader: 'sass-loader',
-  options: {
-    importer: materialImporter
-  },
-}
+ {
+   loader: 'sass-loader',
+   options: {   
+     // Prefer Dart Sass
+     implementation: require('sass'),
+
+     // See https://github.com/webpack-contrib/sass-loader/issues/804
+     webpackImporter: false,
+     sassOptions: {
+       importer: materialImporter,
+       includePaths: ['./node_modules'],
+     },
+   },
+ }
 ```

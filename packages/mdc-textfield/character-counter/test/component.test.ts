@@ -22,17 +22,13 @@
  */
 
 
+import {createFixture, html} from '../../../../testing/dom';
 import {MDCTextFieldCharacterCounter} from '../../../mdc-textfield/character-counter/index';
 
 const getFixture = () => {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  return createFixture(html`
     <div class="mdc-text-field-character-counter">0/10</div>
-  `;
-
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+  `);
 };
 
 describe('MDCTextFieldCharacterCounter', () => {
@@ -51,7 +47,7 @@ describe('MDCTextFieldCharacterCounter', () => {
 
   it('#adapter.setContent sets the text content of the element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.setContent('5 / 10');
+    (component.getDefaultFoundation() as any).adapter.setContent('5 / 10');
     expect(root.textContent).toEqual('5 / 10');
   });
 });

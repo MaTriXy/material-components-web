@@ -21,34 +21,29 @@
  * THE SOFTWARE.
  */
 
+import {createFixture, html} from '../../../testing/dom';
 import {emitEvent} from '../../../testing/dom/events';
 import {createMockFoundation} from '../../../testing/helpers/foundation';
-import {MDCTabScroller, MDCTabScrollerFoundation, util,} from '../index';
+import {MDCTabScroller, MDCTabScrollerFoundation, util} from '../index';
 import {MDCTabScrollerRTL} from '../rtl-scroller';
 
 function getFixture() {
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+  return createFixture(html`
     <div class="mdc-tab-scroller">
       <div class="mdc-tab-scroller__scroll-area">
         <div class="mdc-tab-scroller__scroll-content"></div>
       </div>
     </div>
-  `;
-  const el = wrapper.firstElementChild as HTMLElement;
-  wrapper.removeChild(el);
-  return el;
+  `);
 }
 
 function setupTest() {
   const root = getFixture();
   const component = new MDCTabScroller(root);
-  const area =
-      root.querySelector(MDCTabScrollerFoundation.strings.AREA_SELECTOR) as
-      HTMLElement;
-  const content =
-      root.querySelector(MDCTabScrollerFoundation.strings.CONTENT_SELECTOR) as
-      HTMLElement;
+  const area = root.querySelector<HTMLElement>(
+      MDCTabScrollerFoundation.strings.AREA_SELECTOR)!;
+  const content = root.querySelector<HTMLElement>(
+      MDCTabScrollerFoundation.strings.CONTENT_SELECTOR)!;
   return {root, component, content, area};
 }
 
@@ -61,7 +56,7 @@ describe('MDCTabScroller', () => {
   it('#destroy() calls super.destroy()', () => {
     const {component} = setupTest();
     const mockFoundation = jasmine.createSpyObj('foundation', ['destroy']);
-    (component as any).foundation_ = mockFoundation;
+    (component as any).foundation = mockFoundation;
     component.destroy();
     expect(mockFoundation.destroy).toHaveBeenCalledTimes(1);
   });
@@ -70,36 +65,35 @@ describe('MDCTabScroller', () => {
      () => {
        const {area, component} = setupTest();
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.eventTargetMatchesSelector(
+                  .adapter.eventTargetMatchesSelector(
                       area, MDCTabScrollerFoundation.strings.AREA_SELECTOR))
            .toBe(true);
      });
 
   it('#adapter.addClass adds a class to the root element', () => {
     const {root, component} = setupTest();
-    (component.getDefaultFoundation() as any).adapter_.addClass('foo');
-    expect(root.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addClass('foo');
+    expect(root).toHaveClass('foo');
   });
 
   it('#adapter.removeClass removes a class from the root element', () => {
     const {root, component} = setupTest();
     root.classList.add('foo');
-    (component.getDefaultFoundation() as any).adapter_.removeClass('foo');
-    expect(root.classList.contains('foo')).toBe(false);
+    (component.getDefaultFoundation() as any).adapter.removeClass('foo');
+    expect(root).not.toHaveClass('foo');
   });
 
   it('#adapter.addScrollAreaClass adds a class to the area element', () => {
     const {component, area} = setupTest();
-    (component.getDefaultFoundation() as any)
-        .adapter_.addScrollAreaClass('foo');
-    expect(area.classList.contains('foo')).toBe(true);
+    (component.getDefaultFoundation() as any).adapter.addScrollAreaClass('foo');
+    expect(area).toHaveClass('foo');
   });
 
   it('#adapter.setScrollAreaStyleProperty sets a style property on the area element',
      () => {
        const {component, area} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setScrollAreaStyleProperty('background-color', 'red');
+           .adapter.setScrollAreaStyleProperty('background-color', 'red');
        expect(area.style.backgroundColor === 'red').toBe(true);
      });
 
@@ -107,7 +101,7 @@ describe('MDCTabScroller', () => {
      () => {
        const {component, content} = setupTest();
        (component.getDefaultFoundation() as any)
-           .adapter_.setScrollContentStyleProperty('background-color', 'red');
+           .adapter.setScrollContentStyleProperty('background-color', 'red');
        expect(content.style.backgroundColor === 'red').toBe(true);
      });
 
@@ -116,7 +110,7 @@ describe('MDCTabScroller', () => {
        const {component, content} = setupTest();
        content.style.setProperty('color', 'chartreuse');
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getScrollContentStyleValue('color'))
+                  .adapter.getScrollContentStyleValue('color'))
            .toBe(window.getComputedStyle(content).getPropertyValue('color'));
      });
 
@@ -135,7 +129,7 @@ describe('MDCTabScroller', () => {
        const {component, root, area} = setupScrollLeftTests();
        document.body.appendChild(root);
        (component.getDefaultFoundation() as any)
-           .adapter_.setScrollAreaScrollLeft(101);
+           .adapter.setScrollAreaScrollLeft(101);
        expect(area.scrollLeft).toBeGreaterThanOrEqual(0);
        document.body.removeChild(root);
      });
@@ -146,7 +140,7 @@ describe('MDCTabScroller', () => {
        document.body.appendChild(root);
        area.scrollLeft = 416;
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getScrollAreaScrollLeft())
+                  .adapter.getScrollAreaScrollLeft())
            .toBeGreaterThanOrEqual(0);
        document.body.removeChild(root);
      });
@@ -156,7 +150,7 @@ describe('MDCTabScroller', () => {
        const {component, root, content} = setupTest();
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getScrollContentOffsetWidth())
+                  .adapter.getScrollContentOffsetWidth())
            .toEqual(content.offsetWidth);
        document.body.removeChild(root);
      });
@@ -166,7 +160,7 @@ describe('MDCTabScroller', () => {
        const {component, root} = setupTest();
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.getScrollAreaOffsetWidth())
+                  .adapter.getScrollAreaOffsetWidth())
            .toEqual(root.offsetWidth);
        document.body.removeChild(root);
      });
@@ -176,7 +170,7 @@ describe('MDCTabScroller', () => {
        const {component, root} = setupTest();
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.computeScrollAreaClientRect())
+                  .adapter.computeScrollAreaClientRect())
            .toEqual(root.getBoundingClientRect());
        document.body.removeChild(root);
      });
@@ -186,7 +180,7 @@ describe('MDCTabScroller', () => {
        const {component, root, content} = setupTest();
        document.body.appendChild(root);
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.computeScrollContentClientRect())
+                  .adapter.computeScrollContentClientRect())
            .toEqual(content.getBoundingClientRect());
        document.body.removeChild(root);
      });
@@ -200,7 +194,7 @@ describe('MDCTabScroller', () => {
        // read-only property, so we need to settle for comparing the return
        // values in each browser.
        expect((component.getDefaultFoundation() as any)
-                  .adapter_.computeHorizontalScrollbarHeight())
+                  .adapter.computeHorizontalScrollbarHeight())
            .toBe(util.computeHorizontalScrollbarHeight(document));
        document.body.removeChild(root);
      });
@@ -234,10 +228,8 @@ describe('MDCTabScroller', () => {
   it('#getScrollContentWidth() returns the offsetWidth of the content element',
      () => {
        const {component, root} = setupMockFoundationTest();
-       const contentElement =
-           root.querySelector(
-               MDCTabScrollerFoundation.strings.CONTENT_SELECTOR) as
-           HTMLElement;
+       const contentElement = root.querySelector<HTMLElement>(
+           MDCTabScrollerFoundation.strings.CONTENT_SELECTOR)!;
        expect(component.getScrollContentWidth())
            .toEqual(contentElement.offsetWidth);
      });
@@ -264,9 +256,8 @@ describe('MDCTabScroller', () => {
 
   it('on interaction in the area element, call #handleInteraction()', () => {
     const {root, mockFoundation} = setupMockFoundationTest();
-    const area =
-        root.querySelector(MDCTabScrollerFoundation.strings.AREA_SELECTOR) as
-        HTMLElement;
+    const area = root.querySelector<HTMLElement>(
+        MDCTabScrollerFoundation.strings.AREA_SELECTOR)!;
     emitEvent(area, 'touchstart', {bubbles: true});
     expect(mockFoundation.handleInteraction).toHaveBeenCalled();
   });
@@ -274,9 +265,8 @@ describe('MDCTabScroller', () => {
   it('on transitionend of the content element, call #handleTransitionEnd()',
      () => {
        const {root, mockFoundation} = setupMockFoundationTest();
-       const content = root.querySelector(
-                           MDCTabScrollerFoundation.strings.CONTENT_SELECTOR) as
-           HTMLElement;
+       const content = root.querySelector<HTMLElement>(
+           MDCTabScrollerFoundation.strings.CONTENT_SELECTOR)!;
        emitEvent(content, 'transitionend', {bubbles: true});
        expect(mockFoundation.handleTransitionEnd)
            .toHaveBeenCalledWith(jasmine.anything());

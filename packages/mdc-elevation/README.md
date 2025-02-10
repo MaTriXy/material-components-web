@@ -9,13 +9,6 @@ path: /catalog/elevation/
 
 # Elevation
 
-<!--<div class="article__asset">
-  <a class="article__asset-link"
-     href="https://material-components.github.io/material-components-web-catalog/#/component/elevation">
-    <img src="{{ site.rootpath }}/images/mdc_web_screenshots/elevation.png" width="247" alt="Elevation screenshot">
-  </a>
-</div>-->
-
 Shadows provide important visual cues about objects’ depth and directional movement. They are the only visual cue indicating the amount of separation between surfaces. An object’s elevation determines the appearance of its shadow. The elevation values are mapped out in a "z-space" and range from `0` to `24`.
 
 > **A note about "z-space"**: Within the spec, elevation is normally referred to as having a `dp` value. In other words, how many "pixels" above the base material is a piece of material elevated. On a computer, this is normally represented by a 3-d coordinate system. We like `z-space` (or just "z" for short) because it aligns with the technical definition of, and nomenclature for, a 3-d coordinate system. Therefore, we feel it makes more sense than `dp`. However, when we refer to `z-space` (or `z`), that can be used interchangeably with the spec's `dp`.
@@ -86,7 +79,7 @@ CSS Class | Description
 `mdc-elevation--z<N>` | Sets the elevation to the (N)dp, where 1 <= N <= 24
 `mdc-elevation-transition` | Applies the correct css rules to transition an element between elevations
 
-### Sass Mixins, Variables, and Functions
+### Sass Mixins, Variables, Functions, and Custom Properties
 
 Mixin | Description
 --- | ---
@@ -103,6 +96,7 @@ Function | Description
 --- | ---
 `transition-value($duration, $easing)` | Returns a value for the `transition` property to transition an element between elevations
 `overlay-transition-value($duration, $easing)` | Returns a value for the `transition` property to transition the elevation overlay between elevations
+`elevation-box-shadow($z-value, $color, $opacity-boost)` | Returns the box-shadow for the elevation z-space for that given elevation z-value, and optionally sets the color and/or boosts the opacity of the shadow
 
 Variable | Description
 --- | ---
@@ -111,6 +105,13 @@ Variable | Description
 `$transition-timing-function` | Default easing value for elevation transitions
 `$overlay-color` | Default color for the elevation overlay
 `$overlay-property` | Default property for the elevation overlay transitions
+
+If you need more configurability over your transitions, use the `transition-value` function in conjunction with the exported sass variables.
+
+Custom Property | Default value | Description
+--- | ---
+`--mdc-elevation-overlay-opacity` | `0` | The opacity of the elevation overlay.
+`--mdc-elevation-overlay-fill-color` | `#fff` | The color of the elevation overlay
 
 If you need more configurability over your transitions, use the `transition-value` function in conjunction with the exported sass variables.
 

@@ -23,66 +23,93 @@
 
 import {MDCComponent} from '@material/base/component';
 import {MDCProgressIndicator} from '@material/progress-indicator/component';
+
 import {MDCLinearProgressAdapter} from './adapter';
 import {MDCLinearProgressFoundation} from './foundation';
+import {WithMDCResizeObserver} from './types';
 
+/** MDC Linear Progress */
 export class MDCLinearProgress extends
     MDCComponent<MDCLinearProgressFoundation> implements MDCProgressIndicator {
-  static attachTo(root: Element) {
+  static override attachTo(root: HTMLElement) {
     return new MDCLinearProgress(root);
   }
 
   set determinate(value: boolean) {
-    this.foundation_.setDeterminate(value);
+    this.foundation.setDeterminate(value);
   }
 
   set progress(value: number) {
-    this.foundation_.setProgress(value);
+    this.foundation.setProgress(value);
   }
 
   set buffer(value: number) {
-    this.foundation_.setBuffer(value);
-  }
-
-  set reverse(value: boolean) {
-    this.foundation_.setReverse(value);
+    this.foundation.setBuffer(value);
   }
 
   open() {
-    this.foundation_.open();
+    this.foundation.open();
   }
 
   close() {
-    this.foundation_.close();
+    this.foundation.close();
   }
 
-  getDefaultFoundation() {
-    // DO NOT INLINE this variable. For backward compatibility, foundations take a Partial<MDCFooAdapter>.
-    // To ensure we don't accidentally omit any methods, we need a separate, strongly typed adapter variable.
+  override initialSyncWithDOM() {
+    this.root.addEventListener('transitionend', () => {
+      this.foundation.handleTransitionEnd();
+    });
+  }
+
+  override getDefaultFoundation() {
+    // DO NOT INLINE this variable. For backward compatibility, foundations take
+    // a Partial<MDCFooAdapter>. To ensure we don't accidentally omit any
+    // methods, we need a separate, strongly typed adapter variable.
     const adapter: MDCLinearProgressAdapter = {
-      addClass: (className: string) => this.root_.classList.add(className),
-      forceLayout: () => (this.root_ as HTMLElement).offsetWidth,
+      addClass: (className: string) => {
+        this.root.classList.add(className);
+      },
+      forceLayout: () => {
+        this.root.getBoundingClientRect();
+      },
       setBufferBarStyle: (styleProperty: string, value: string) => {
-        (this.root_.querySelector(
-             MDCLinearProgressFoundation.strings.BUFFER_BAR_SELECTOR) as
-         HTMLElement)
-            .style.setProperty(styleProperty, value);
+        const bufferBar = this.root.querySelector<HTMLElement>(
+            MDCLinearProgressFoundation.strings.BUFFER_BAR_SELECTOR);
+        if (bufferBar) {
+          bufferBar.style.setProperty(styleProperty, value);
+        }
       },
       setPrimaryBarStyle: (styleProperty: string, value: string) => {
-        (this.root_.querySelector(
-             MDCLinearProgressFoundation.strings.PRIMARY_BAR_SELECTOR) as
-         HTMLElement)
-            .style.setProperty(styleProperty, value);
+        const primaryBar = this.root.querySelector<HTMLElement>(
+            MDCLinearProgressFoundation.strings.PRIMARY_BAR_SELECTOR);
+        if (primaryBar) {
+          primaryBar.style.setProperty(styleProperty, value);
+        }
       },
-      hasClass: (className: string) => this.root_.classList.contains(className),
+      hasClass: (className: string) => this.root.classList.contains(className),
       removeAttribute: (attributeName: string) => {
-        this.root_.removeAttribute(attributeName);
+        this.root.removeAttribute(attributeName);
       },
-      removeClass: (className: string) =>
-          this.root_.classList.remove(className),
+      removeClass: (className: string) => {
+        this.root.classList.remove(className);
+      },
       setAttribute: (attributeName: string, value: string) => {
-        this.root_.setAttribute(attributeName, value);
+        this.safeSetAttribute(this.root, attributeName, value);
       },
+      setStyle: (name: string, value: string) => {
+        this.root.style.setProperty(name, value);
+      },
+      attachResizeObserver: (callback) => {
+        const RO = (window as unknown as WithMDCResizeObserver).ResizeObserver;
+        if (RO) {
+          const ro = new RO(callback);
+          ro.observe(this.root);
+          return ro;
+        }
+
+        return null;
+      },
+      getWidth: () => this.root.offsetWidth,
     };
     return new MDCLinearProgressFoundation(adapter);
   }
